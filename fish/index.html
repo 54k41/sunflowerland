@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Pesca</title>
+    <script>
+        /* As chaves de armazenamento ficam declaradas aqui, antes do CSS, porque o
+           script anti-FOUC abaixo precisa de THEME_KEY. O script principal no fim
+           do <body> reaproveita estas constantes e não as redeclara. */
+        const STORAGE_KEY = 'fishInventory_v1';
+        const THEME_KEY = 'fishTheme_v1';
+        const FILTERS_KEY = 'fishFilters_v1';
+
+        /* Anti-FOUC: o tema é decidido antes de o CSS ser lido. Sem isso a página
+           nasce no tema escuro (padrão de :root) e "pisca" para o claro quando o
+           script do fim do <body> roda. */
+        (function () {
+            let theme = null;
+
+            try {
+                const saved = localStorage.getItem(THEME_KEY);
+                if (saved === 'dark' || saved === 'light') theme = saved;
+            } catch (e) {
+                // Armazenamento bloqueado: segue para a preferência do sistema.
+            }
+
+            if (!theme) {
+                theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light'
+                    : 'dark';
+            }
+
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <style>
+        /* =========================================
+           1. VARIÁVEIS E TEMAS (Design Tokens)
+           ========================================= */
+        :root {
+            color-scheme: dark;
+            --accent: #10b981;
+            --accent-muted: rgba(16, 185, 129, 0.15);
+            --danger: #f87171;
+            --bg-body: #0f1117;
+            --bg-surface: #1a1d24;
+            --bg-hover: #222630;
+            --border: #2e3340;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --toast-bg: #1f2937;
+            --toast-border: #374151;
+        }
+
+        [data-theme="light"] {
+            color-scheme: light;
+            --accent: #059669;
+            --accent-muted: rgba(5, 150, 105, 0.12);
+            --danger: #dc2626;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --toast-bg: #ffffff;
+            --toast-border: #cbd5e1;
+        }
+
+        /* =========================================
+           2. BASE
+           ========================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            padding: 24px 16px 80px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .container {
+            max-width: 620px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* =========================================
+           3. CABEÇALHO
+           ========================================= */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .theme-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: background 0.15s;
+        }
+
+        .theme-btn:hover {
+            background: var(--bg-surface);
+        }
+
+        .theme-btn:focus-visible,
+        .chip:focus-visible,
+        .fish-card:focus-visible,
+        .search-input:focus-visible,
+        .search-clear:focus-visible,
+        .link-btn:focus-visible,
+        .toast-undo-btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* =========================================
+           4. FILTROS EM CHIPS & MODOS DE EXIBIÇÃO
+           ========================================= */
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .chip-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s ease;
+        }
+
+        .chip:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .chip.active {
+            background: var(--accent-muted);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* =========================================
+           4b. BUSCA INSTANTÂNEA
+           ========================================= */
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 9px 36px 9px 12px;
+            border-radius: var(--radius-sm);
+            transition: border-color 0.15s;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 0;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.8rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .search-clear:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        /* O atributo hidden precisa vencer o display: flex declarado acima. */
+        .search-clear[hidden] {
+            display: none;
+        }
+
+        /* O type="search" mostra um botão × nativo no Chrome/Edge/Safari que
+           ficaria sobreposto ao botão .search-clear do app. */
+        .search-input::-webkit-search-cancel-button {
+            display: none;
+        }
+
+        /* =========================================
+           5. STATUS & PROGRESSO DUPLO
+           ========================================= */
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .progress-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-numbers {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-sub {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            gap: 4px 12px;
+            flex-wrap: wrap;
+        }
+
+        .progress-sub span {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        #filterProgressLabel {
+            flex: 1 1 auto;
+        }
+
+        #filterProgressCount {
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           6. LISTA DE PEIXES (CARDS BUTTONS)
+           ========================================= */
+        .fish-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 10px;
+        }
+
+        .fish-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-family: inherit;
+            color: inherit;
+            position: relative;
+            transition: transform 0.1s, border-color 0.15s, background-color 0.15s, opacity 0.2s;
+        }
+
+        .fish-card:hover {
+            border-color: var(--text-secondary);
+            background: var(--bg-hover);
+        }
+
+        .fish-card:active {
+            transform: scale(0.98);
+        }
+
+        .fish-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .fish-name {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .checkbox-indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            color: transparent;
+            background: transparent;
+            transition: all 0.15s;
+        }
+
+        /* O chum pode ter dois ingredientes (ex.: "Crab, Fat Chicken"). Com nowrap
+           + ellipsis, o segundo ingrediente era cortado sem deixar pista do que
+           faltava. Agora o texto quebra em até duas linhas e o title do card
+           oferece a lista completa. */
+        .fish-meta {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .fish-meta strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Estado: Capturado */
+        .fish-card.collected {
+            background: transparent;
+            opacity: 0.55;
+            border-color: var(--border);
+        }
+
+        .fish-card.collected .fish-name {
+            text-decoration: line-through;
+        }
+
+        .fish-card.collected .checkbox-indicator {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin: 12px 0 4px;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            padding: 32px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Texto disponível apenas para leitores de tela. */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            clip-path: inset(50%);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* =========================================
+           7. FEEDBACK / TOAST DE DESFAZER
+           ========================================= */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--toast-bg);
+            border: 1px solid var(--toast-border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            /* As mensagens carregam o contador de alterações pendentes; sem
+               contenção, texto + botão estouram a largura em telas de 360px. */
+            width: max-content;
+            max-width: min(560px, calc(100vw - 32px));
+            flex-wrap: wrap;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+            z-index: 1000;
+        }
+
+        .toast-msg {
+            flex: 1 1 200px;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Estado fechado: além de transparente e deslocado, o toast sai da ordem de
+           tabulação e da árvore de acessibilidade. A classe .toast define display:flex,
+           por isso o !important é necessário para o atributo hidden prevalecer. */
+        .toast[hidden] {
+            display: none !important;
+        }
+
+        .toast-undo-btn {
+            background: var(--accent-muted);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* =========================================
+           8. AÇÕES DE DADOS (BACKUP)
+           ========================================= */
+        .data-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px 18px;
+        }
+
+        .link-btn {
+            background: none;
+            border: 0;
+            padding: 4px 2px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.78rem;
+            text-decoration: underline;
+            text-decoration-color: var(--border);
+            text-underline-offset: 3px;
+            cursor: pointer;
+        }
+
+        .link-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .link-btn-danger:hover {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Guia de Pesca</h1>
+            <button id="themeToggle" class="theme-btn" aria-label="Alternar tema">☀️</button>
+        </header>
+
+        <!-- Filtros em Chips -->
+        <div class="filter-group">
+            <span class="filter-label" id="viewFilterLabel">Exibição</span>
+            <!-- Um modo de exibição sempre precisa estar ativo (não dá para
+                 desmarcar todos), então a semântica correta é radiogroup: um item
+                 selecionado por vez, exposto por aria-checked. -->
+            <div class="chip-row" id="viewChips" role="radiogroup" aria-labelledby="viewFilterLabel">
+                <button type="button" class="chip active" data-val="all" role="radio" aria-checked="true" tabindex="0">Todos</button>
+                <button type="button" class="chip" data-val="missing" role="radio" aria-checked="false" tabindex="-1">Faltantes</button>
+                <button type="button" class="chip" data-val="collected" role="radio" aria-checked="false" tabindex="-1">Capturados</button>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-label" id="baitFilterLabel">Isca</span>
+            <div class="chip-row" id="baitChips" role="group" aria-labelledby="baitFilterLabel">
+                <button type="button" class="chip" data-val="Earthworm" aria-pressed="false">Earthworm</button>
+                <button type="button" class="chip" data-val="Grub" aria-pressed="false">Grub</button>
+                <button type="button" class="chip" data-val="Fishing Lure" aria-pressed="false">Fishing Lure</button>
+                <button type="button" class="chip" data-val="Redwiggler" aria-pressed="false">Redwiggler</button>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-label" id="seasonFilterLabel">Estação</span>
+            <div class="chip-row" id="seasonChips" role="group" aria-labelledby="seasonFilterLabel">
+                <button type="button" class="chip" data-val="Spring" aria-pressed="false">Spring</button>
+                <button type="button" class="chip" data-val="Summer" aria-pressed="false">Summer</button>
+                <button type="button" class="chip" data-val="Autumn" aria-pressed="false">Autumn</button>
+                <button type="button" class="chip" data-val="Winter" aria-pressed="false">Winter</button>
+            </div>
+        </div>
+
+        <!-- Progresso Detalhado -->
+        <section class="progress-box" aria-label="Progresso da Coleção">
+            <div class="progress-header">
+                <span class="progress-title" id="progressTitle">Progresso Total da Coleção</span>
+                <span id="globalProgressCount" class="progress-numbers">0/0 (0%)</span>
+            </div>
+            <!-- O indicador carrega o próprio nome acessível: o rótulo da <section>
+                 pai não identifica o widget para as tecnologias assistivas. -->
+            <div class="progress-bar" role="progressbar" id="progressBar" aria-labelledby="progressTitle" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div class="progress-sub">
+                <span id="filterProgressLabel">Filtro ativo: Todos</span>
+                <span id="filterProgressCount">0/0 capturados</span>
+            </div>
+        </section>
+
+        <!-- Busca instantânea por peixe -->
+        <div class="search-box" role="search" aria-label="Buscar um peixe">
+            <label class="sr-only" for="searchInput">Buscar um peixe</label>
+            <input type="search" id="searchInput" class="search-input"
+                   placeholder="Buscar um peixe…" autocomplete="off" spellcheck="false">
+            <button type="button" id="searchClear" class="search-clear" aria-label="Limpar busca" hidden>✕</button>
+        </div>
+
+        <!-- Resultados -->
+        <main id="resultsArea">
+            <div id="missingContainer">
+                <h2 class="section-label" id="missingLabel">Faltantes</h2>
+                <div id="missingGrid" class="fish-grid"></div>
+            </div>
+
+            <div id="collectedContainer">
+                <h2 class="section-label" id="collectedLabel">Capturados</h2>
+                <div id="collectedGrid" class="fish-grid"></div>
+            </div>
+
+            <div id="emptyState" class="empty-message hidden" tabindex="-1">
+                Nenhum peixe encontrado com os filtros selecionados.
+            </div>
+        </main>
+
+        <!-- Backup do progresso: o inventário vive só no localStorage deste
+             navegador, então exportar/importar/redefinir evitam perder tudo ao
+             limpar os dados do navegador ou trocar de aparelho. -->
+        <footer class="data-actions">
+            <button type="button" id="exportBtn" class="link-btn">Exportar progresso</button>
+            <button type="button" id="importBtn" class="link-btn">Importar</button>
+            <button type="button" id="resetBtn" class="link-btn link-btn-danger">Redefinir coleção</button>
+            <input type="file" id="importInput" class="sr-only" accept="application/json,.json"
+                   tabindex="-1" aria-hidden="true">
+        </footer>
+    </div>
+
+    <!-- Feedback com Ação de Desfazer.
+         O toast fica hidden + inert enquanto fechado, para que o botão não seja
+         alcançável pelo teclado nem exista antes da primeira notificação. Como isso
+         o retira da árvore de acessibilidade, os anúncios passam a sair da região
+         viva permanente abaixo (#toastAnnouncer), que nunca sai do documento. -->
+    <div id="toast" class="toast" role="group" aria-label="Notificação" hidden inert>
+        <span id="toastMsg" class="toast-msg"></span>
+        <button id="toastUndo" class="toast-undo-btn" type="button">Desfazer</button>
+    </div>
+
+    <div id="toastAnnouncer" class="sr-only" role="status" aria-live="polite"></div>
+
+    <script>
+        /* STORAGE_KEY, THEME_KEY e FILTERS_KEY são declaradas no <script> do
+           <head>, que roda antes do CSS por causa do anti-FOUC. */
+
+        const fishDatabase = [
+            { name: "Anchovy", baits: ["Earthworm"], chums: ["Carrot", "Egg"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
+            { name: "Butterflyfish", baits: ["Earthworm"], chums: ["Sunflower"], seasons: ["Summer", "Autumn"] },
+            { name: "Blowfish", baits: ["Earthworm"], chums: ["Yam"], seasons: ["Winter"] },
+            { name: "Clownfish", baits: ["Earthworm"], chums: ["Cabbage"], seasons: ["Summer", "Winter"] },
+            { name: "Sea Bass", baits: ["Earthworm"], chums: ["Anchovy"], seasons: ["Spring", "Autumn"] },
+            { name: "Sea Horse", baits: ["Earthworm"], chums: ["Seaweed"], seasons: ["Spring", "Summer"] },
+            { name: "Horse Mackerel", baits: ["Earthworm"], chums: ["Blueberry"], seasons: ["Summer", "Winter"] },
+            { name: "Halibut", baits: ["Earthworm"], chums: ["Anchovy"], seasons: ["Spring", "Autumn"] },
+            { name: "Squid", baits: ["Earthworm"], chums: ["Eggplant", "Onion"], seasons: ["Spring", "Winter"] },
+            { name: "Porgy", baits: ["Earthworm"], chums: ["Yam"], seasons: ["Spring"] },
+            { name: "Muskellunge", baits: ["Earthworm"], chums: ["Turnip"], seasons: ["Autumn"] },
+            { name: "Red Snapper", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Apple", "Honey"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
+            { name: "Moray Eel", baits: ["Earthworm", "Grub", "Fishing Lure"], chums: ["Gold"], seasons: ["Summer", "Autumn"] },
+            { name: "Olive Flounder", baits: ["Earthworm", "Grub", "Fishing Lure"], chums: ["Rhubarb"], seasons: ["Spring", "Autumn"] },
+            { name: "Napoleanfish", baits: ["Grub", "Fishing Lure"], chums: ["Carrot"], seasons: ["Summer", "Autumn"] },
+            { name: "Surgeonfish", baits: ["Grub", "Fishing Lure"], chums: ["Orange"], seasons: ["Summer", "Autumn"] },
+            { name: "Angelfish", baits: ["Grub", "Fishing Lure"], chums: ["Banana"], seasons: ["Summer", "Winter"] },
+            { name: "Zebra Turkeyfish", baits: ["Grub", "Fishing Lure"], chums: ["Beetroot", "Rhubarb"], seasons: ["Spring", "Summer"] },
+            { name: "Ray", baits: ["Grub", "Fishing Lure"], chums: ["Squid"], seasons: ["Spring", "Summer"] },
+            { name: "Hammerhead Shark", baits: ["Grub", "Fishing Lure"], chums: ["Iron"], seasons: ["Summer", "Autumn"] },
+            { name: "Barred Knifejaw", baits: ["Grub", "Fishing Lure"], chums: ["Anchovy"], seasons: ["Spring", "Summer"] },
+            { name: "Walleye", baits: ["Grub"], chums: ["Broccoli"], seasons: ["Winter"] },
+            { name: "Rock Blackfish", baits: ["Grub"], chums: ["Onion"], seasons: ["Autumn"] },
+            { name: "Tilapia", baits: ["Grub"], chums: ["Zucchini"], seasons: ["Summer"] },
+            { name: "Tuna", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Orange", "Wild Mushroom"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
+            { name: "Mahi Mahi", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Corn"], seasons: ["Summer", "Autumn"] },
+            { name: "Blue Marlin", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Wheat"], seasons: ["Summer", "Winter"] },
+            { name: "Oarfish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Kale"], seasons: ["Spring", "Winter"] },
+            { name: "Football Fish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Sunflower"], seasons: ["Winter"] },
+            { name: "Sunfish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Anchovy"], seasons: ["Summer", "Autumn"] },
+            { name: "Coelacanth", baits: ["Redwiggler", "Fishing Lure"], chums: ["Cabbage"], seasons: ["Spring", "Winter"] },
+            { name: "Parrotfish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Seaweed"], seasons: ["Spring", "Summer"] },
+            { name: "Whale Shark", baits: ["Redwiggler", "Fishing Lure"], chums: ["Crab", "Fat Chicken"], seasons: ["Summer", "Winter"] },
+            { name: "Saw Shark", baits: ["Redwiggler", "Fishing Lure"], chums: ["Red Snapper", "Speed Chicken"], seasons: ["Spring", "Summer"] },
+            { name: "White Shark", baits: ["Redwiggler", "Fishing Lure"], chums: ["Tuna", "Rich Chicken"], seasons: ["Summer", "Winter"] },
+            { name: "Cobia", baits: ["Redwiggler"], chums: ["Broccoli"], seasons: ["Summer"] },
+            { name: "Trout", baits: ["Redwiggler"], chums: ["Pepper"], seasons: ["Winter"] },
+            { name: "Weakfish", baits: ["Redwiggler"], chums: ["Artichoke"], seasons: ["Spring"] }
+        ];
+
+        // Cache dos nomes válidos para evitar reconstrução a cada chamada de getInventory()
+        const validFishNames = new Set(fishDatabase.map(f => f.name));
+
+        // 1 & 4. Helpers de Armazenamento com Fallback, Validação e Limpeza
+        function safeGetJSON(key, fallback) {
+            try {
+                const item = localStorage.getItem(key);
+                if (!item) return fallback;
+                return JSON.parse(item);
+            } catch {
+                return fallback;
+            }
+        }
+
+        // Retorna true somente quando a gravação realmente aconteceu.
+        function safeSetJSON(key, val) {
+            try {
+                localStorage.setItem(key, JSON.stringify(val));
+                return true;
+            } catch (e) {
+                console.warn('Falha ao salvar no localStorage:', e);
+                return false;
+            }
+        }
+
+        function sanitizeInventory(raw) {
+            if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
+
+            // Higienização contra peixes inexistentes no banco
+            const clean = {};
+            for (const [key, val] of Object.entries(raw)) {
+                if (validFishNames.has(key) && val === true) {
+                    clean[key] = true;
+                }
+            }
+            return clean;
+        }
+
+        function readInventoryFromStorage() {
+            return sanitizeInventory(safeGetJSON(STORAGE_KEY, {}));
+        }
+
+        // O inventário desta aba vive em memória; o localStorage é apenas a cópia
+        // persistente. Se a gravação falhar, a marcação continua visível e coerente
+        // com o que o usuário acabou de fazer, mas ele é avisado de que nada foi salvo.
+        let inventoryCache = null;
+        let hasUnsavedInventory = false;
+
+        function getInventory() {
+            if (inventoryCache === null) {
+                inventoryCache = readInventoryFromStorage();
+            }
+            return { ...inventoryCache };
+        }
+
+        function persistInventory(inv) {
+            const saved = safeSetJSON(STORAGE_KEY, inv);
+            inventoryCache = { ...inv };
+            hasUnsavedInventory = !saved;
+            return saved;
+        }
+
+        // Base para escritas por peixe (toggle/desfazer). Lê o storage na hora
+        // em vez de partir só do cache: se outra aba gravou depois do último
+        // evento 'storage' recebido aqui, o cache está defasado e gravar a
+        // partir dele apagaria a alteração externa (last-write-wins do objeto
+        // inteiro). Quando há gravação pendente local (hasUnsavedInventory),
+        // a união preserva as marcas feitas aqui que ainda não foram salvas;
+        // limitação conhecida: a união não preserva remoções (ver handler de
+        // 'storage') e favorece nunca perder progresso.
+        function getBaseInventoryForWrite() {
+            const fresh = readInventoryFromStorage();
+            if (!hasUnsavedInventory || inventoryCache === null) {
+                return fresh;
+            }
+            return { ...fresh, ...inventoryCache };
+        }
+
+        // 8. Estado inicial dos Filtros com Persistência
+        const defaultState = { bait: '', season: '', view: 'all' };
+
+        const viewChipsEl = document.getElementById('viewChips');
+        const baitChipsEl = document.getElementById('baitChips');
+        const seasonChipsEl = document.getElementById('seasonChips');
+
+        // Valida filtros persistidos contra os valores realmente existentes na UI.
+        const validBaits = new Set(
+            [...baitChipsEl.querySelectorAll('.chip')].map(chip => chip.dataset.val)
+        );
+        const validSeasons = new Set(
+            [...seasonChipsEl.querySelectorAll('.chip')].map(chip => chip.dataset.val)
+        );
+        const validViews = new Set(
+            [...viewChipsEl.querySelectorAll('.chip')].map(chip => chip.dataset.val)
+        );
+
+        const state = { bait: '', season: '', view: 'all' };
+
+        // A busca textual é transitória: não é persistida nem sincronizada entre
+        // abas, porque descreve o que a pessoa está procurando agora.
+        let searchQuery = '';
+
+        function validateFilters(raw) {
+            const candidate = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : defaultState;
+
+            return {
+                bait: typeof candidate.bait === 'string' && validBaits.has(candidate.bait) ? candidate.bait : '',
+                season: typeof candidate.season === 'string' && validSeasons.has(candidate.season) ? candidate.season : '',
+                view: validViews.has(candidate.view) ? candidate.view : 'all'
+            };
+        }
+
+        function readFiltersFromStorage() {
+            return validateFilters(safeGetJSON(FILTERS_KEY, defaultState));
+        }
+
+        // Aplica um conjunto de filtros ao estado e reflete a escolha nos chips.
+        function applyFilters(filters) {
+            state.bait = filters.bait;
+            state.season = filters.season;
+            state.view = filters.view;
+
+            applyStateToChips(viewChipsEl, 'view');
+            applyStateToChips(baitChipsEl, 'bait');
+            applyStateToChips(seasonChipsEl, 'season');
+        }
+
+        // Só as três escolhas persistíveis são gravadas — a busca fica de fora.
+        function saveFiltersState() {
+            safeSetJSON(FILTERS_KEY, { bait: state.bait, season: state.season, view: state.view });
+        }
+
+        const rawSavedFilters = safeGetJSON(FILTERS_KEY, defaultState);
+        const initialFilters = validateFilters(rawSavedFilters);
+        applyFilters(initialFilters);
+
+        // Remove do armazenamento eventuais filtros órfãos detectados na
+        // inicialização. A comparação é campo a campo (não via JSON.stringify)
+        // para não regravar quando o objeto salvo só difere na ordem das chaves.
+        // O acesso é protegido porque o valor salvo pode não ser um objeto.
+        const savedFilters = (rawSavedFilters && typeof rawSavedFilters === 'object') ? rawSavedFilters : {};
+        if (savedFilters.bait !== initialFilters.bait
+            || savedFilters.season !== initialFilters.season
+            || savedFilters.view !== initialFilters.view) {
+            safeSetJSON(FILTERS_KEY, initialFilters);
+        }
+
+        // 5 & 9. Tema Seguro com Detecção do Sistema
+        const themeToggle = document.getElementById('themeToggle');
+        const systemThemeMedia = window.matchMedia
+            ? window.matchMedia('(prefers-color-scheme: light)')
+            : null;
+
+        function getSystemTheme() {
+            return systemThemeMedia && systemThemeMedia.matches ? 'light' : 'dark';
+        }
+
+        function getSavedTheme() {
+            try {
+                const saved = localStorage.getItem(THEME_KEY);
+                return (saved === 'dark' || saved === 'light') ? saved : null;
+            } catch {
+                return null;
+            }
+        }
+
+        function applyTheme(theme, persist = false) {
+            const validTheme = theme === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', validTheme);
+            themeToggle.textContent = validTheme === 'dark' ? '☀️' : '🌙';
+
+            if (persist) {
+                try {
+                    localStorage.setItem(THEME_KEY, validTheme);
+                } catch {}
+            }
+        }
+
+        function applyCurrentThemePreference() {
+            applyTheme(getSavedTheme() || getSystemTheme(), false);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark', true);
+        });
+
+        // Quando o usuário não escolheu um tema manualmente, acompanha o sistema.
+        if (systemThemeMedia) {
+            const handleSystemThemeChange = () => {
+                if (!getSavedTheme()) {
+                    applyTheme(getSystemTheme(), false);
+                }
+            };
+
+            if (typeof systemThemeMedia.addEventListener === 'function') {
+                systemThemeMedia.addEventListener('change', handleSystemThemeChange);
+            } else if (typeof systemThemeMedia.addListener === 'function') {
+                systemThemeMedia.addListener(handleSystemThemeChange);
+            }
+        }
+
+        // 7. Toast, Feedback de Desfazer e Anúncios
+        const TOAST_DURATION = 4000;
+        const TOAST_CONFIRM_DURATION = 1600;
+        const TOAST_EXIT_MS = 300; // um pouco acima da transição de saída (0.25s), para escondê-lo só depois do fim da animação
+        const MAX_UNDO_STEPS = 20;
+
+        // Pilha de alterações desfazíveis. Antes existia só um `lastAction`: cada
+        // clique novo sobrescrevia o anterior, então apenas a última marcação podia
+        // ser desfeita. A pilha vale enquanto o toast de desfazer estiver aberto.
+        let undoStack = [];
+        let toastTimeout = null;
+        let toastExitTimeout = null;
+        let announceTimeout = null;
+
+        const toastEl = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastUndo = document.getElementById('toastUndo');
+        const toastAnnouncer = document.getElementById('toastAnnouncer');
+
+        function pluralize(count, singular, plural) {
+            return `${count} ${count === 1 ? singular : plural}`;
+        }
+
+        // A região viva é esvaziada antes de receber o texto novo: mensagens
+        // repetidas em sequência ("X marcado como capturado." duas vezes) não
+        // mudariam o conteúdo e alguns leitores de tela não anunciariam nada.
+        function announce(message) {
+            if (!toastAnnouncer) return;
+
+            if (announceTimeout) clearTimeout(announceTimeout);
+
+            toastAnnouncer.textContent = '';
+            announceTimeout = setTimeout(() => {
+                announceTimeout = null;
+                toastAnnouncer.textContent = message;
+            }, 60);
+        }
+
+        // O toast entra na ordem de tabulação e na árvore de acessibilidade apenas
+        // enquanto está visível.
+        function openToast() {
+            if (toastExitTimeout) {
+                clearTimeout(toastExitTimeout);
+                toastExitTimeout = null;
+            }
+
+            if (toastEl.hidden) {
+                toastEl.hidden = false;
+                toastEl.removeAttribute('inert');
+                void toastEl.offsetWidth; // força o reflow para a transição de entrada rodar
+            }
+
+            toastEl.classList.add('visible');
+        }
+
+        // A saída respeita o fim da animação: só então o toast é escondido de fato.
+        function closeToast() {
+            toastEl.classList.remove('visible');
+
+            if (toastExitTimeout) clearTimeout(toastExitTimeout);
+            toastExitTimeout = setTimeout(() => {
+                toastExitTimeout = null;
+                if (!toastEl.classList.contains('visible')) {
+                    toastEl.hidden = true;
+                    toastEl.setAttribute('inert', '');
+                }
+            }, TOAST_EXIT_MS);
+        }
+
+        // Fecha a notificação sem executar ação, cancela o temporizador pendente e
+        // encerra a janela de desfazer.
+        function dismissToast() {
+            if (toastTimeout) {
+                clearTimeout(toastTimeout);
+                toastTimeout = null;
+            }
+            undoStack = [];
+            closeToast();
+        }
+
+        function pushUndo(action) {
+            undoStack.push(action);
+            if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
+        }
+
+        // `undoable: false` (o padrão) encerra a janela de desfazer: uma notificação
+        // que não é de desfazer significa que a pessoa já seguiu adiante.
+        function showToast(message, { undoable = false, duration = TOAST_DURATION } = {}) {
+            if (!undoable) undoStack = [];
+
+            toastMsg.textContent = message;
+            toastUndo.textContent = undoable
+                ? (undoStack.length > 1 ? `Desfazer (${undoStack.length})` : 'Desfazer')
+                : 'OK';
+
+            announce(message);
+            openToast();
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastTimeout = null;
+                dismissToast();
+            }, duration);
+        }
+
+        // Depois de render(), o card só permanece no documento se o peixe passa
+        // nos filtros e no modo de exibição atuais — o resto é removido do DOM.
+        function isFishCardVisible(name) {
+            return ['missingGrid', 'collectedGrid'].some(id => {
+                const grid = document.getElementById(id);
+                return !!grid && Array.from(grid.children).some(card => card.dataset && card.dataset.fishName === name);
+            });
+        }
+
+        toastUndo.addEventListener('click', () => {
+            // Sem ação pendente o botão é apenas um "OK": fecha a notificação e
+            // cancela o temporizador em vez de não fazer nada.
+            if (undoStack.length === 0) {
+                dismissToast();
+                return;
+            }
+
+            const entry = undoStack.pop();
+            const { name, previousState } = entry;
+            const isRetry = !!entry.retryPending;
+
+            // Retentativa de um desfazer cuja gravação falhou: o cache JÁ está
+            // no estado restaurado (previousState), então a guarda de
+            // "alteração externa" abaixo acusaria falso-positivo
+            // (cache === previousState) e travaria sem tentar gravar de novo.
+            // Por isso a retentativa pula a guarda e reaplica o estado de forma
+            // idempotente antes de persistir.
+            const inv = getBaseInventoryForWrite();
+
+            if (!isRetry) {
+                // Se o estado atual já não é o que a ação deixou para trás, algo
+                // externo (outra aba, importação) mexeu neste peixe depois dela:
+                // restaurar às cegas destruiria a mudança mais recente.
+                if (!!inv[name] === !!previousState) {
+                    if (undoStack.length === 0) {
+                        showToast(`${name} foi alterado em outra aba e não foi modificado.`, { duration: TOAST_CONFIRM_DURATION });
+                    } else {
+                        showToast(
+                            `${name} foi alterado em outra aba e não foi modificado. Ainda há ${pluralize(undoStack.length, 'alteração', 'alterações')} para desfazer.`,
+                            { undoable: true }
+                        );
+                    }
+                    return;
+                }
+            }
+
+            // Restaura exatamente o estado anterior à ação (idempotente na
+            // retentativa: se o cache já está restaurado, não muda nada e só
+            // tenta gravar de novo).
+            if (previousState) {
+                inv[name] = true;
+            } else {
+                delete inv[name];
+            }
+
+            const saved = persistInventory(inv);
+            render();
+
+            // O card restaurado pode não estar na tela se um filtro ou o modo
+            // de exibição o esconde — a mensagem deixa isso explícito.
+            const hiddenNote = isFishCardVisible(name) ? '' : ' Ele está oculto pelos filtros ativos.';
+
+            if (!saved) {
+                // Nada foi salvo: a ação volta para a pilha e continua desfazível.
+                // A reversão em memória JÁ aconteceu (persistInventory atualiza o
+                // cache mesmo quando a gravação falha), por isso a mensagem diz o
+                // que a tela mostra: o peixe foi restaurado, mas ao recarregar
+                // volta ao estado do storage — o oposto do restaurado, porque só
+                // entra na pilha a ação original que foi salva com sucesso.
+                // retryPending evita o falso-positivo de "alteração externa" no
+                // próximo clique: o cache já está em previousState por causa da
+                // restauração em memória, então a retentativa precisa pular a
+                // guarda e só tentar gravar de novo.
+                const estadoAoRecarregar = previousState ? 'faltante' : 'capturado';
+                undoStack.push({ name, previousState, retryPending: true });
+                showToast(
+                    `Não foi possível salvar: ${name} foi restaurado na tela, mas ao recarregar a página ele volta a ficar ${estadoAoRecarregar}.${hiddenNote}`,
+                    { undoable: true }
+                );
+                return;
+            }
+
+            if (undoStack.length === 0) {
+                showToast(`${name} restaurado.${hiddenNote}`, { duration: TOAST_CONFIRM_DURATION });
+                return;
+            }
+
+            showToast(
+                `${name} restaurado.${hiddenNote} Ainda há ${pluralize(undoStack.length, 'alteração', 'alterações')} para desfazer.`,
+                { undoable: true }
+            );
+        });
+
+        function toggleFish(name) {
+            // Parte da base fresca (não só do cache) para não apagar alterações
+            // gravadas por outra aba entre o último 'storage' e este clique.
+            const inv = getBaseInventoryForWrite();
+            const previousState = !!inv[name];
+            const newState = !previousState;
+
+            if (newState) {
+                inv[name] = true;
+            } else {
+                delete inv[name];
+            }
+
+            // A alteração vale em memória antes de qualquer coisa: se a gravação
+            // falhar, o card continua marcado e a mensagem não mente sobre o estado.
+            const saved = persistInventory(inv);
+
+            render();
+
+            if (saved) {
+                pushUndo({ name, previousState });
+
+                const pending = undoStack.length > 1
+                    ? ` ${pluralize(undoStack.length, 'alteração', 'alterações')} para desfazer.`
+                    : '';
+
+                showToast(
+                    `${name} marcado como ${newState ? 'capturado' : 'faltante'}.${pending}`,
+                    { undoable: true }
+                );
+            } else {
+                // A pilha não é limpa: ações anteriores que foram salvas com
+                // sucesso continuam desfazíveis enquanto o toast estiver aberto
+                // (por isso o toast é undoable se houver algo na pilha). A ação
+                // que acabou de falhar não entra na pilha: desfazê-la exigiria
+                // gravar de novo, e o armazenamento acabou de recusar. Quando
+                // há ações anteriores, o texto deixa explícito que o botão
+                // Desfazer se refere a elas — e não à marcação que acabou de
+                // falhar — para não criar a expectativa errada.
+                const priorNote = undoStack.length > 0
+                    ? ` O botão Desfazer reverte ${pluralize(undoStack.length, 'alteração anterior salva', 'alterações anteriores salvas')}.`
+                    : '';
+                showToast(
+                    `${name} ${newState ? 'marcado' : 'desmarcado'}, mas não foi possível salvar: a alteração será perdida ao recarregar a página.${priorNote}`,
+                    { undoable: undoStack.length > 0 }
+                );
+            }
+        }
+
+        // 6 & 10. Criação Segura e Acessível dos Cards via DOM
+        function fishSlug(name) {
+            return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        }
+
+        // O nome acessível do card vem do próprio título visível (aria-labelledby) e
+        // o estado, do aria-checked do role="checkbox". Antes havia um aria-label
+        // que repetia "capturado/faltante" — o leitor de tela anunciava o estado
+        // duas vezes — e ainda engolia o conteúdo dos filhos. O chum passa a ser
+        // descrição (aria-describedby), então o texto continua alcançável.
+        function updateFishCard(card, fish, isCollected) {
+            const slug = fishSlug(fish.name);
+
+            card.classList.toggle('collected', isCollected);
+            card.setAttribute('aria-checked', isCollected ? 'true' : 'false');
+            card.setAttribute('aria-labelledby', `fish-name-${slug}`);
+            card.setAttribute('aria-describedby', `fish-chum-${slug}`);
+        }
+
+        function createFishCard(fish, isCollected) {
+            const slug = fishSlug(fish.name);
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'fish-card';
+            // Identificador estável: permite reaproveitar o card e devolver o foco.
+            card.dataset.fishName = fish.name;
+            card.setAttribute('role', 'checkbox');
+            updateFishCard(card, fish, isCollected);
+
+            const header = document.createElement('div');
+            header.className = 'fish-header';
+
+            const name = document.createElement('span');
+            name.className = 'fish-name';
+            name.id = `fish-name-${slug}`;
+            name.textContent = fish.name;
+
+            const indicator = document.createElement('span');
+            indicator.className = 'checkbox-indicator';
+            indicator.textContent = '✓';
+            indicator.setAttribute('aria-hidden', 'true');
+
+            header.appendChild(name);
+            header.appendChild(indicator);
+
+            const chumText = `Chum: ${fish.chums.join(', ')}`;
+
+            const chum = document.createElement('div');
+            chum.className = 'fish-meta';
+            chum.id = `fish-chum-${slug}`;
+            // O CSS já quebra o texto em até duas linhas; o title cobre o caso de
+            // ainda assim não caber por inteiro.
+            chum.title = chumText;
+
+            const chumLabel = document.createElement('strong');
+            chumLabel.textContent = 'Chum:';
+            chum.appendChild(chumLabel);
+            chum.appendChild(document.createTextNode(` ${fish.chums.join(', ')}`));
+
+            card.appendChild(header);
+            card.appendChild(chum);
+
+            card.addEventListener('click', () => toggleFish(fish.name));
+            return card;
+        }
+
+        // Configuração de Chips Interativos
+        // Grupos de escolha única ("Exibição") usam a semântica de radiogroup:
+        // aria-checked e tabindex "móvel", com as setas percorrendo as opções.
+        // Grupos alternáveis (Isca, Estação) usam aria-pressed.
+        function isRadioGroup(container) {
+            return container.getAttribute('role') === 'radiogroup';
+        }
+
+        // A classe `active` é a fonte da verdade visual; o atributo ARIA
+        // correspondente acompanha a classe para expor a seleção às tecnologias
+        // assistivas.
+        function applyStateToChips(container, stateKey) {
+            const radio = isRadioGroup(container);
+            const value = state[stateKey];
+
+            container.querySelectorAll('.chip').forEach(chip => {
+                // Só o grupo "Exibição" tem um chip "Todos" que representa a
+                // ausência de filtro; nos outros grupos, ausência de valor significa
+                // nenhum chip ativo.
+                const isActive = value ? chip.dataset.val === value : chip.dataset.val === 'all';
+                chip.classList.toggle('active', isActive);
+
+                if (radio) {
+                    chip.setAttribute('aria-checked', isActive ? 'true' : 'false');
+                    // Apenas a opção escolhida entra na ordem de tabulação.
+                    chip.tabIndex = isActive ? 0 : -1;
+                } else {
+                    chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                }
+            });
+        }
+
+        function selectChip(container, chip, stateKey, toggleable) {
+            if (toggleable && chip.classList.contains('active')) {
+                // Clicar no item já ativo do grupo alternável limpa o filtro.
+                state[stateKey] = '';
+            } else {
+                state[stateKey] = chip.dataset.val;
+            }
+
+            applyStateToChips(container, stateKey);
+            saveFiltersState();
+            render();
+        }
+
+        function setupChips(container, stateKey, toggleable) {
+            applyStateToChips(container, stateKey);
+
+            container.addEventListener('click', (e) => {
+                const chip = e.target.closest('.chip');
+                if (!chip) return;
+                selectChip(container, chip, stateKey, toggleable);
+            });
+
+            if (!isRadioGroup(container)) return;
+
+            // Padrão WAI-ARIA de radiogroup: as setas movem o foco E mudam a
+            // seleção; Home/End vão para as pontas; a navegação dá a volta.
+            container.addEventListener('keydown', (e) => {
+                const chips = [...container.querySelectorAll('.chip')];
+                const currentIndex = chips.indexOf(document.activeElement);
+                if (currentIndex === -1) return;
+
+                const lastIndex = chips.length - 1;
+                let nextIndex;
+
+                switch (e.key) {
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                        nextIndex = currentIndex === lastIndex ? 0 : currentIndex + 1;
+                        break;
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                        nextIndex = currentIndex === 0 ? lastIndex : currentIndex - 1;
+                        break;
+                    case 'Home':
+                        nextIndex = 0;
+                        break;
+                    case 'End':
+                        nextIndex = lastIndex;
+                        break;
+                    default:
+                        return;
+                }
+
+                e.preventDefault();
+
+                const nextChip = chips[nextIndex];
+                selectChip(container, nextChip, stateKey, false);
+                nextChip.focus();
+            });
+        }
+
+        setupChips(viewChipsEl, 'view', false);
+        setupChips(baitChipsEl, 'bait', true);
+        setupChips(seasonChipsEl, 'season', true);
+
+        // Reordena as duas grades em uma única passada, sem descartar os nós.
+        // Um peixe que passa de "Faltante" para "Capturado" precisa sair de uma
+        // grade e entrar na outra: se a grade de origem o apagasse antes disso, o nó
+        // sairia do documento no meio do caminho (e o foco do teclado se perderia
+        // junto). Por isso a limpeza remove apenas o que não pertence a NENHUMA das
+        // grades, e a relocação acontece por um insertBefore direto na grade de
+        // destino.
+        function syncGrids(groups) {
+            const keepAlive = new Set();
+            groups.forEach(({ cards }) => cards.forEach(card => keepAlive.add(card)));
+
+            groups.forEach(({ grid }) => {
+                Array.from(grid.children).forEach(child => {
+                    if (!keepAlive.has(child)) child.remove();
+                });
+            });
+
+            groups.forEach(({ grid, cards }) => {
+                cards.forEach((card, index) => {
+                    const current = grid.children[index] || null;
+                    if (current !== card) {
+                        grid.insertBefore(card, current);
+                    }
+                });
+            });
+        }
+
+        // Devolve o foco ao card do peixe que estava focado. Se ele saiu do resultado
+        // (mudou de seção oculta pelo filtro ou deixou de passar nos filtros), o foco
+        // vai para o próximo item disponível na ordem exibida.
+        function restoreCardFocus(previousName, renderedCards, filtered) {
+            if (!previousName) return;
+
+            const previousCard = renderedCards.get(previousName);
+            if (previousCard) {
+                if (document.activeElement !== previousCard) {
+                    previousCard.focus({ preventScroll: true });
+                }
+                return;
+            }
+
+            const startIndex = filtered.findIndex(f => f.name === previousName);
+
+            // startIndex === -1 significa que o peixe focado deixou de passar nos
+            // filtros: quem mudou o filtro foi a pessoa, não o card. Não existe
+            // "próximo item" natural nessa situação, e saltar para o primeiro peixe
+            // da lista seria um salto arbitrário — então o foco simplesmente não é
+            // realocado (quem agiu por teclado está no chip que acabou de ativar).
+            if (startIndex === -1) return;
+
+            let next = null;
+            for (let i = startIndex + 1; i < filtered.length && !next; i++) {
+                next = renderedCards.get(filtered[i].name) || null;
+            }
+            for (let i = startIndex - 1; i >= 0 && !next; i--) {
+                next = renderedCards.get(filtered[i].name) || null;
+            }
+
+            // preventScroll também aqui: trocar de item não pode arrastar a tela.
+            if (next) {
+                next.focus({ preventScroll: true });
+                return;
+            }
+
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState && !emptyState.classList.contains('hidden')) {
+                emptyState.focus({ preventScroll: true });
+            }
+        }
+
+        // 2 & 3. Renderização com Separação Clara de Progresso Total e Local
+        function render() {
+            const inventory = getInventory();
+            const totalFishCount = fishDatabase.length;
+            const globalCollectedCount = fishDatabase.filter(f => !!inventory[f.name]).length;
+
+            const missingGrid = document.getElementById('missingGrid');
+            const collectedGrid = document.getElementById('collectedGrid');
+            const missingContainer = document.getElementById('missingContainer');
+            const collectedContainer = document.getElementById('collectedContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            // Busca textual: casa com o nome do peixe ou com qualquer um dos chums
+            // exigidos, para achar tanto "Whale Shark" quanto "chicken".
+            // A comparação é por palavras: cada termo digitado precisa aparecer em
+            // algum lugar de "nome + chums", em qualquer ordem. Assim "mushroom",
+            // "wild mushroom" e "mushroom wild" são equivalentes e acham o Tuna
+            // (chum oficial "Wild Mushroom").
+            const query = searchQuery.trim().toLowerCase();
+            const queryTokens = query.split(/\s+/).filter(Boolean);
+            const matchesQuery = (fish) => {
+                if (queryTokens.length === 0) return true;
+                const haystack = `${fish.name} ${fish.chums.join(' ')}`.toLowerCase();
+                return queryTokens.every(token => haystack.includes(token));
+            };
+
+            const filtered = fishDatabase.filter(f => {
+                const matchBait = !state.bait || f.baits.includes(state.bait);
+                const matchSeason = !state.season || f.seasons.includes(state.season);
+                return matchBait && matchSeason && matchesQuery(f);
+            });
+
+            // Guarda quem tinha o foco antes de mexer no DOM, para devolvê-lo depois.
+            const activeElement = document.activeElement;
+            const focusedFishName = activeElement && activeElement.classList
+                && activeElement.classList.contains('fish-card')
+                ? activeElement.dataset.fishName
+                : null;
+
+            // Reaproveita os cards já montados, indexados pelo nome do peixe.
+            const cardPool = new Map();
+            [missingGrid, collectedGrid].forEach(grid => {
+                Array.from(grid.children).forEach(card => {
+                    if (card.dataset && card.dataset.fishName) {
+                        cardPool.set(card.dataset.fishName, card);
+                    }
+                });
+            });
+
+            const desiredMissing = [];
+            const desiredCollected = [];
+            const renderedCards = new Map();
+
+            let filteredCollectedCount = 0;
+
+            filtered.forEach(fish => {
+                const isCollected = !!inventory[fish.name];
+
+                if (isCollected) {
+                    filteredCollectedCount++;
+                }
+
+                // O modo de exibição pode ocultar o card, mas ele continua contando.
+                const isVisible = isCollected ? state.view !== 'missing' : state.view !== 'collected';
+                if (!isVisible) return;
+
+                let card = cardPool.get(fish.name);
+                if (card) {
+                    cardPool.delete(fish.name);
+                } else {
+                    card = createFishCard(fish, isCollected);
+                }
+
+                updateFishCard(card, fish, isCollected);
+
+                if (isCollected) {
+                    desiredCollected.push(card);
+                } else {
+                    desiredMissing.push(card);
+                }
+
+                renderedCards.set(fish.name, card);
+            });
+
+            // Cards que saíram do resultado deixam o documento.
+            cardPool.forEach(card => card.remove());
+
+            syncGrids([
+                { grid: missingGrid, cards: desiredMissing },
+                { grid: collectedGrid, cards: desiredCollected }
+            ]);
+
+            const hasVisibleItems = desiredMissing.length > 0 || desiredCollected.length > 0;
+
+            const emptyMessage = query
+                ? `Nenhum peixe encontrado para "${searchQuery.trim()}".`
+                : 'Nenhum peixe encontrado com os filtros selecionados.';
+            if (emptyState.textContent !== emptyMessage) emptyState.textContent = emptyMessage;
+
+            emptyState.classList.toggle('hidden', hasVisibleItems);
+            missingContainer.classList.toggle('hidden', desiredMissing.length === 0);
+            collectedContainer.classList.toggle('hidden', desiredCollected.length === 0);
+
+            // Atualiza barra e contadores
+            updateProgressDisplays(globalCollectedCount, totalFishCount, filteredCollectedCount, filtered.length);
+
+            restoreCardFocus(focusedFishName, renderedCards, filtered);
+        }
+
+        function updateProgressDisplays(globalCollected, globalTotal, filterCollected, filterTotal) {
+            const globalPct = globalTotal === 0 ? 0 : Math.round((globalCollected / globalTotal) * 100);
+            
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressFill.style.width = `${globalPct}%`;
+            progressBar.setAttribute('aria-valuenow', globalPct);
+            document.getElementById('globalProgressCount').textContent = `${globalCollected}/${globalTotal} (${globalPct}%)`;
+
+            // Indicador de filtros ativos
+            const activeFilters = [];
+            if (state.bait) activeFilters.push(`Isca: ${state.bait}`);
+            if (state.season) activeFilters.push(`Estação: ${state.season}`);
+            if (state.view !== 'all') activeFilters.push(`Modo: ${state.view === 'missing' ? 'Faltantes' : 'Capturados'}`);
+            if (searchQuery.trim()) activeFilters.push(`Busca: "${searchQuery.trim()}"`);
+
+            const filterLabelText = activeFilters.length > 0 ? activeFilters.join(' • ') : 'Nenhum filtro aplicado';
+            document.getElementById('filterProgressLabel').textContent = filterLabelText;
+
+            const filteredMissing = filterTotal - filterCollected;
+            const filterProgressCount = document.getElementById('filterProgressCount');
+
+            if (state.view === 'missing') {
+                filterProgressCount.textContent = `Neste filtro: ${pluralize(filteredMissing, 'faltante', 'faltantes')}`;
+            } else if (state.view === 'collected') {
+                filterProgressCount.textContent = `Neste filtro: ${pluralize(filterCollected, 'capturado', 'capturados')}`;
+            } else {
+                filterProgressCount.textContent = `Neste filtro: ${filterCollected}/${filterTotal} ${filterCollected === 1 ? 'capturado' : 'capturados'}`;
+            }
+        }
+
+        // 11. Sincronização entre abas: uma alteração feita em outra aba precisa
+        // refletir nos cards e nos contadores sem exigir interação local ou recarga.
+        // O inventário não é o único estado compartilhado — tema e filtros também
+        // vivem no localStorage e ficariam dessincronizados se só o inventário fosse
+        // observado.
+        window.addEventListener('storage', (event) => {
+            // event.key === null indica localStorage.clear() em outra aba: tema e
+            // filtros foram apagados junto, então tudo é relido.
+            if (event.key === null) {
+                if (!hasUnsavedInventory) inventoryCache = readInventoryFromStorage();
+                applyCurrentThemePreference();
+                applyFilters(readFiltersFromStorage());
+                render();
+                return;
+            }
+
+            if (event.key === STORAGE_KEY) {
+                if (hasUnsavedInventory) {
+                    // A gravação local falhou antes (cota, por exemplo). Em vez de
+                    // recusar atualizações externas para sempre ou sobrescrevê-las
+                    // com o estado local, tenta gravar de novo agora unindo os dois
+                    // inventários: como um peixe só existe como `true` ou ausente,
+                    // a união preserva tanto as marcas feitas aqui quanto as feitas
+                    // na aba que acabou de gravar. Limitação conhecida: a união não
+                    // preserva remoções — se a outra aba desmarcou um peixe (ou
+                    // redefiniu a coleção) enquanto havia gravação pendente aqui,
+                    // a união o remarca; sem timestamps por peixe no storage não há
+                    // como decidir melhor, e a heurística favorece nunca perder
+                    // progresso. Se a gravação ainda assim falhar, o estado local
+                    // prevalece.
+                    const external = readInventoryFromStorage();
+                    const merged = { ...(inventoryCache || {}), ...external };
+                    if (!persistInventory(merged)) return;
+                }
+
+                inventoryCache = readInventoryFromStorage();
+                render();
+                return;
+            }
+
+            if (event.key === THEME_KEY) {
+                applyCurrentThemePreference();
+                return;
+            }
+
+            if (event.key === FILTERS_KEY) {
+                applyFilters(readFiltersFromStorage());
+                render();
+            }
+        });
+
+        // 12. Busca textual instantânea (por peixe ou por chum)
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+
+        function setSearchQuery(value) {
+            searchQuery = value;
+            searchClear.hidden = value.length === 0;
+            render();
+        }
+
+        searchInput.addEventListener('input', () => setSearchQuery(searchInput.value));
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && searchInput.value !== '') {
+                e.preventDefault();
+                searchInput.value = '';
+                setSearchQuery('');
+            }
+        });
+
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            setSearchQuery('');
+            searchInput.focus();
+        });
+
+        // 13. Backup: exportar, importar e redefinir a coleção
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const importInput = document.getElementById('importInput');
+
+        const BACKUP_APP_ID = 'fishInventory';
+
+        function exportInventory() {
+            const inv = getInventory();
+            const payload = {
+                app: BACKUP_APP_ID,
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                collected: inv
+            };
+
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `pesca-progresso-${new Date().toISOString().slice(0, 10)}.json`;
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+            const count = Object.keys(inv).length;
+            showToast(
+                `${pluralize(count, 'peixe exportado', 'peixes exportados')}.`,
+                { duration: TOAST_CONFIRM_DURATION }
+            );
+        }
+
+        // Aceita tanto o pacote gerado por este app quanto um mapa simples
+        // { "Anchovy": true }: o sanitizeInventory descarta o que não for peixe válido.
+        function extractInventory(parsed) {
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                // Array.isArray também aqui: um array passaria pelo typeof 'object'
+                // e o sanitizeInventory o descartaria por inteiro.
+                if (parsed.collected && typeof parsed.collected === 'object' && !Array.isArray(parsed.collected)) {
+                    return parsed.collected;
+                }
+                if (parsed.inventory && typeof parsed.inventory === 'object' && !Array.isArray(parsed.inventory)) {
+                    return parsed.inventory;
+                }
+            }
+            return parsed;
+        }
+
+        function readFileAsText(file) {
+            if (typeof file.text === 'function') return file.text();
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result));
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file);
+            });
+        }
+
+        function importInventoryFile(file) {
+            readFileAsText(file)
+                .then((text) => {
+                    let parsed;
+                    try {
+                        parsed = JSON.parse(text);
+                    } catch {
+                        showToast('Arquivo inválido: o conteúdo não é um JSON.', { duration: TOAST_CONFIRM_DURATION });
+                        return;
+                    }
+
+                    const raw = extractInventory(parsed);
+                    const clean = sanitizeInventory(raw);
+                    const count = Object.keys(clean).length;
+
+                    if (count === 0) {
+                        // Um backup exportado com collected: {} é uma coleção
+                        // vazia válida e precisa poder ser restaurado (zerar a
+                        // coleção). Sem isso, só seria possível esvaziar via
+                        // "Redefinir". Distingue do arquivo inválido: só aceita
+                        // zero quando o envelope collected/inventory existe e
+                        // está vazio; mapa cru vazio ou só com peixes inválidos
+                        // continua rejeitado.
+                        const rawIsEmpty = raw && typeof raw === 'object' && !Array.isArray(raw)
+                            && Object.keys(raw).length === 0;
+                        const hasEnvelope = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+                            && ((parsed.collected && typeof parsed.collected === 'object' && !Array.isArray(parsed.collected))
+                                || (parsed.inventory && typeof parsed.inventory === 'object' && !Array.isArray(parsed.inventory)));
+                        if (!(rawIsEmpty && hasEnvelope)) {
+                            showToast('Nenhum peixe reconhecido no arquivo.', { duration: TOAST_CONFIRM_DURATION });
+                            return;
+                        }
+                    }
+
+                    const question = count === 0
+                        ? 'Importar coleção vazia? A coleção atual será substituída e ficará sem peixes capturados.'
+                        : `Importar ${pluralize(count, 'peixe capturado', 'peixes capturados')}? `
+                            + 'A coleção atual será substituída.';
+                    if (!window.confirm(question)) return;
+
+                    const saved = persistInventory(clean);
+                    render();
+                    showToast(
+                        saved
+                            ? (count === 0 ? 'Coleção vazia importada.' : `${pluralize(count, 'peixe importado', 'peixes importados')}.`)
+                            : 'Importação aplicada, mas não foi possível salvar: a alteração será perdida ao recarregar a página.',
+                        { duration: TOAST_CONFIRM_DURATION }
+                    );
+                })
+                .catch(() => {
+                    showToast('Não foi possível ler o arquivo selecionado.', { duration: TOAST_CONFIRM_DURATION });
+                });
+        }
+
+        exportBtn.addEventListener('click', exportInventory);
+
+        importBtn.addEventListener('click', () => importInput.click());
+
+        importInput.addEventListener('change', () => {
+            const file = importInput.files && importInput.files[0];
+            // Zera o valor para que escolher o mesmo arquivo de novo dispare change.
+            importInput.value = '';
+            if (file) importInventoryFile(file);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (!window.confirm('Redefinir a coleção? Todo o progresso salvo será apagado.')) return;
+
+            const saved = persistInventory({});
+            render();
+            showToast(
+                saved
+                    ? 'Coleção redefinida.'
+                    : 'Coleção limpa nesta aba, mas não foi possível salvar: a alteração será perdida ao recarregar a página.',
+                { duration: TOAST_CONFIRM_DURATION }
+            );
+        });
+
+        // Inicialização
+        applyCurrentThemePreference();
+        render();
+    </script>
+</body>
+</html>

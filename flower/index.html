@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Flores & Cruzamento</title>
+    <script>
+        // Aplica o tema antes da primeira pintura: sem preferência salva, segue o
+        // prefers-color-scheme do sistema. Evita o flash de tema escuro em SO claro.
+        (function () {
+            try {
+                var saved = localStorage.getItem('flowerGuideTheme');
+                var prefersLight = window.matchMedia
+                    && window.matchMedia('(prefers-color-scheme: light)').matches;
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    (saved === 'light' || saved === 'dark') ? saved : (prefersLight ? 'light' : 'dark')
+                );
+            } catch (err) {
+                /* Sem acesso ao localStorage: mantém o tema declarado no <html>. */
+            }
+        })();
+    </script>
+    <style>
+        /* =========================================
+           1. VARIÁVEIS E TEMAS (Design Tokens)
+           ========================================= */
+        :root {
+            color-scheme: dark;
+            --accent: #10b981;
+            --accent-hover: #059669;
+            --accent-muted: rgba(16, 185, 129, 0.15);
+            --bg-body: #0f1117;
+            --bg-surface: #1a1d24;
+            --bg-surface-elevated: #222630;
+            --bg-hover: #262b36;
+            --border: #2e3340;
+            --border-focus: #3b82f6;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --best-bg: rgba(254, 240, 138, 0.1);
+            --best-border: rgba(250, 204, 21, 0.3);
+            --best-text: #fde047;
+            --best-arrow: #ca8a04;
+            --danger: #ef4444;
+            --danger-muted: rgba(239, 68, 68, 0.15);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        [data-theme="light"] {
+            color-scheme: light;
+            --accent: #059669;
+            --accent-hover: #047857;
+            --accent-muted: rgba(5, 150, 105, 0.12);
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-surface-elevated: #f1f5f9;
+            --bg-hover: #e2e8f0;
+            --border: #e2e8f0;
+            --border-focus: #2563eb;
+            --text-primary: #0f172a;
+            /* Contraste sobre #ffffff: secondary 7.6:1 e muted 4.8:1 — ambos passam em
+               WCAG AA (4.5:1) para texto pequeno. O valor anterior (#94a3b8) ficava em ~2.6:1. */
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --best-bg: #fef9c3;
+            --best-border: #fef08a;
+            --best-text: #854d0e;
+            --best-arrow: #a16207;
+            --danger: #dc2626;
+            --danger-muted: rgba(220, 38, 38, 0.1);
+        }
+
+        /* =========================================
+           2. BASE & ACESSIBILIDADE
+           ========================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            padding: 24px 16px 80px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
+        }
+
+        .container {
+            max-width: 720px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .save-indicator {
+            font-size: 0.75rem;
+            color: var(--accent);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            font-weight: 500;
+        }
+
+        .save-indicator.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Aviso persistente: a tela foi atualizada, mas nada foi gravado no navegador. */
+        .save-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: var(--danger-muted);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .save-warning-icon {
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-surface-elevated);
+            border-color: var(--text-secondary);
+        }
+
+        /* =========================================
+           3. FILTROS, BUSCA & ORDENAÇÃO
+           ========================================= */
+        .controls-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .search-bar {
+            width: 100%;
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 9px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+        }
+
+        .search-bar:focus {
+            border-color: var(--accent);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .chip-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .chip:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .chip.active {
+            background: var(--accent-muted);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .toolbar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 6px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sort-select {
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+
+        .btn-clear {
+            background: transparent;
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-clear:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: var(--danger-muted);
+        }
+
+        /* =========================================
+           4. PROGRESSO GLOBAL & FILTRADO
+           ========================================= */
+        .progress-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .progress-subtext {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* =========================================
+           5. CARDS DE FLORES
+           ========================================= */
+        .flower-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 12px;
+        }
+
+        .flower-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            transition: border-color 0.15s, background-color 0.15s;
+        }
+
+        .flower-card:hover {
+            border-color: var(--text-muted);
+            background: var(--bg-hover);
+        }
+
+        .flower-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .flower-title-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .flower-name {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .flower-badge-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .tag {
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .checkbox-btn {
+            background: var(--bg-body);
+            border: 1.5px solid var(--border);
+            width: 26px;
+            height: 26px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: #ffffff;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .checkbox-btn:hover {
+            border-color: var(--accent);
+        }
+
+        /* O ícone vive sempre no DOM, mas só é renderizado quando o estado é "marcado".
+           Usar display:none (em vez de color:transparent) impede que leitores de tela e o
+           modo de alto contraste do Windows (forced-colors) forcem a cor e exponham um
+           "✓" falso em botões desmarcados. */
+        .check-icon {
+            display: none;
+            line-height: 1;
+        }
+
+        .checkbox-btn[aria-checked="true"] {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .checkbox-btn[aria-checked="true"] .check-icon {
+            display: inline-block;
+        }
+
+        @media (forced-colors: active) {
+            .checkbox-btn[aria-checked="true"] {
+                background: Highlight;
+                border-color: Highlight;
+                color: HighlightText;
+            }
+        }
+
+        /* Cards coletados mantêm contraste AA: em vez de reduzir a opacidade do
+           card inteiro (que derrubava o texto para ~2.5:1), usa borda tracejada
+           e texto secundário — visualmente distinto, mas legível. */
+        .flower-card.collected {
+            border-style: dashed;
+            background: var(--bg-surface);
+        }
+
+        .flower-card.collected .flower-name {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .recipe-box {
+            border-top: 1px dashed var(--border);
+            padding-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .recipe-header {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .recipe-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .recipe-list li {
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            padding: 2px 0;
+        }
+
+        .expand-btn:hover {
+            text-decoration: underline;
+        }
+
+        .best-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 5px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+            transition: all 0.15s;
+        }
+
+        .best-btn:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .best-btn .arrow-icon {
+            font-size: 0.65rem;
+            transition: transform 0.2s ease;
+        }
+
+        .best-btn[aria-expanded="true"] .arrow-icon {
+            transform: rotate(180deg);
+        }
+
+        .best-path {
+            display: none;
+            background: var(--best-bg);
+            border: 1px solid var(--best-border);
+            color: var(--best-text);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+
+        .best-path.open {
+            display: flex;
+        }
+
+        .path-step {
+            text-align: center;
+            width: 100%;
+            word-break: break-word;
+        }
+
+        .path-arrow {
+            font-size: 0.7rem;
+            color: var(--best-arrow);
+            line-height: 1;
+        }
+
+        .section-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin: 12px 0 6px;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            padding: 36px 16px;
+            background: var(--bg-surface);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* =========================================
+           6. TOAST & FEEDBACK COM DESFAZER
+           ========================================= */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.82rem;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease, visibility 0.25s ease;
+            pointer-events: none;
+            /* Nunca ultrapassa a viewport: mensagens longas + botão de desfazer
+               quebravam o layout em telas de 360px (iPhone SE) com scroll horizontal. */
+            width: max-content;
+            max-width: min(560px, calc(100vw - 32px));
+            flex-wrap: wrap;
+        }
+
+        .toast-text {
+            flex: 1 1 200px;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .toast-undo-btn {
+            background: var(--accent-muted);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .toast-undo-btn:hover {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>Guia de Flores</h1>
+            </div>
+            <div class="header-actions">
+                <span id="saveIndicator" class="save-indicator" aria-live="polite">☁ Salvo</span>
+                <button type="button" id="resetBtn" class="icon-btn" title="Resetar progresso da coleção" aria-label="Resetar progresso da coleção">↺</button>
+                <button type="button" id="themeToggle" class="icon-btn" aria-label="Alternar tema">☀️</button>
+            </div>
+        </header>
+
+        <div id="saveWarning" class="save-warning hidden" role="alert" aria-live="assertive" data-kind="">
+            <span class="save-warning-icon" aria-hidden="true">⚠</span>
+            <span data-warning-text>Persistência indisponível — o navegador bloqueou o armazenamento local. Nada do que você marcar será salvo.</span>
+        </div>
+
+        <section class="controls-card" role="search" aria-label="Painel de filtros e busca">
+            <input type="search" id="searchInput" class="search-bar" placeholder="Buscar por flor, semente, ingrediente ou família..." aria-label="Campo de busca" />
+
+            <div class="filter-group">
+                <span class="filter-label" id="seedFilterLabel">Semente Base</span>
+                <div class="chip-row" id="seedChips" role="group" aria-labelledby="seedFilterLabel">
+                    <button type="button" class="chip active" data-val="" aria-pressed="true">Todas</button>
+                    <button type="button" class="chip" data-val="Sunpetal Seed (1 Day)" aria-pressed="false">Sunpetal (1d)</button>
+                    <button type="button" class="chip" data-val="Bloom Seed (2 Days)" aria-pressed="false">Bloom (2d)</button>
+                    <button type="button" class="chip" data-val="Lily Seed (5 Days)" aria-pressed="false">Lily (5d)</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label" id="typeFilterLabel">Família / Espécie</span>
+                <div class="chip-row" id="typeChips" role="group" aria-labelledby="typeFilterLabel">
+                    <button type="button" class="chip active" data-val="" aria-pressed="true">Todas</button>
+                    <button type="button" class="chip" data-val="Pansy" aria-pressed="false">Pansy</button>
+                    <button type="button" class="chip" data-val="Cosmos" aria-pressed="false">Cosmos</button>
+                    <button type="button" class="chip" data-val="Balloon Flower" aria-pressed="false">Balloon</button>
+                    <button type="button" class="chip" data-val="Daffodil" aria-pressed="false">Daffodil</button>
+                    <button type="button" class="chip" data-val="Carnation" aria-pressed="false">Carnation</button>
+                    <button type="button" class="chip" data-val="Lotus" aria-pressed="false">Lotus</button>
+                    <button type="button" class="chip" data-val="Special" aria-pressed="false">Especial</button>
+                </div>
+            </div>
+
+            <div class="toolbar-row">
+                <label style="display:flex; align-items:center; gap: 6px; font-size:0.75rem; color:var(--text-secondary);">
+                    Ordenar:
+                    <select id="sortSelect" class="sort-select" aria-label="Ordenar flores por">
+                        <option value="default">Padrão da base</option>
+                        <option value="name-asc">Nome (A - Z)</option>
+                        <option value="name-desc">Nome (Z - A)</option>
+                        <option value="recipes-desc">Mais cruzamentos</option>
+                    </select>
+                </label>
+
+                <button type="button" id="clearFiltersBtn" class="btn-clear hidden">× Limpar filtros</button>
+            </div>
+        </section>
+
+        <section class="progress-card" aria-label="Progresso da coleção">
+            <div class="progress-header">
+                <span>Progresso Geral: <strong id="globalProgressLabel">Carregando...</strong></span>
+                <span id="globalRemainingLabel" class="progress-subtext"></span>
+            </div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="filterProgressSubtext" class="progress-subtext hidden"></div>
+        </section>
+
+        <main id="flowerListContainer">
+            <div id="missingSection">
+                <div class="section-label" id="missingLabel">Pendentes</div>
+                <div id="missingGrid" class="flower-grid"></div>
+            </div>
+
+            <div id="collectedSection" class="hidden">
+                <div class="section-label" id="collectedLabel">Cultivadas</div>
+                <div id="collectedGrid" class="flower-grid"></div>
+            </div>
+
+            <div id="emptyState" class="empty-message hidden">
+                <p id="emptyStateMessage">Nenhuma flor encontrada para os filtros aplicados.</p>
+                <button type="button" id="emptyClearBtn" class="btn-clear">Limpar filtros e busca</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite">
+        <span id="toastText" class="toast-text"></span>
+        <button type="button" id="toastUndoBtn" class="toast-undo-btn hidden">Desfazer última alteração</button>
+    </div>
+
+    <script>
+        /* =========================================
+           7. DATABASE & VALIDAÇÃO COM BUSCA PRÉ-COMPUTADA
+           ========================================= */
+        const rawFlowerDatabase = [
+            {
+                id: "sun_red_pansy",
+                name: "Red Pansy",
+                type: "Pansy",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Radish", "Banana", "(1d) Red Cosmos", "(2d) Purple Daffodil", "(2d) Red Balloon Flower", "(5d) Red Lotus", "(5d) Primula Enigma"]
+            },
+            {
+                id: "sun_yellow_pansy",
+                name: "Yellow Pansy",
+                type: "Pansy",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Sunflower", "Apple", "(1d) Red Pansy", "(2d) Red Daffodil", "(2d) Yellow Balloon Flower", "(5d) Yellow Carnation"]
+            },
+            {
+                id: "sun_purple_pansy",
+                name: "Purple Pansy",
+                type: "Pansy",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "3d",
+                bestSteps: ["(1d) Purple Cosmos", "(1d) Blue Pansy", "(1d) Purple Pansy"],
+                recipes: ["(1d) Blue Pansy", "(2d) Purple Balloon Flower", "(5d) Purple Carnation"]
+            },
+            {
+                id: "sun_white_pansy",
+                name: "White Pansy",
+                type: "Pansy",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "3d",
+                bestSteps: ["(1d) Yellow Pansy", "(1d) Yellow Cosmos", "(1d) White Pansy"],
+                recipes: ["(1d) Yellow Cosmos"]
+            },
+            {
+                id: "sun_blue_pansy",
+                name: "Blue Pansy",
+                type: "Pansy",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "2d",
+                bestSteps: ["(1d) Purple Cosmos", "(1d) Blue Pansy"],
+                recipes: ["(1d) Purple Cosmos", "(1d) White Pansy", "(1d) White Cosmos", "(2d) White Daffodil", "(2d) Blue Daffodil", "(5d) White Carnation"]
+            },
+            {
+                id: "sun_red_cosmos",
+                name: "Red Cosmos",
+                type: "Cosmos",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "8d",
+                bestSteps: ["(5d) White Lotus", "(2d) Yellow Daffodil", "(1d) Red Cosmos"],
+                recipes: ["(2d) Yellow Daffodil", "(5d) Purple Lotus"]
+            },
+            {
+                id: "sun_yellow_cosmos",
+                name: "Yellow Cosmos",
+                type: "Cosmos",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "2d",
+                bestSteps: ["(1d) Yellow Pansy", "(1d) Yellow Cosmos"],
+                recipes: ["(1d) Yellow Pansy", "(2d) White Balloon Flower", "(5d) Red Carnation"]
+            },
+            {
+                id: "sun_purple_cosmos",
+                name: "Purple Cosmos",
+                type: "Cosmos",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Beetroot", "Eggplant", "Kale", "(1d) Blue Cosmos", "(2d) Blue Balloon Flower", "(2d) Celestial Frostbloom"]
+            },
+            {
+                id: "sun_white_cosmos",
+                name: "White Cosmos",
+                type: "Cosmos",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "7d",
+                bestSteps: ["(1d) Red Pansy", "(5d) Yellow Lotus", "(1d) White Cosmos"],
+                recipes: ["(1d) Prism Petal", "(5d) Yellow Lotus"]
+            },
+            {
+                id: "sun_blue_cosmos",
+                name: "Blue Cosmos",
+                type: "Cosmos",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Cauliflower", "Parsnip", "Blueberry", "(1d) Purple Pansy", "(5d) White Lotus", "(5d) Blue Carnation"]
+            },
+            {
+                id: "sun_prism_petal",
+                name: "Prism Petal",
+                type: "Special",
+                seed: "Sunpetal Seed (1 Day)",
+                bestTime: "8d",
+                bestSteps: ["(1d) Purple Cosmos", "(1d) Blue Pansy", "(5d) Blue Lotus", "(1d) Prism Petal"],
+                recipes: ["(5d) Blue Lotus"]
+            },
+            {
+                id: "bloom_red_balloon",
+                name: "Red Balloon Flower",
+                type: "Balloon Flower",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Sunflower", "Beetroot", "Apple", "Banana", "(1d) Purple Pansy", "(1d) Red Pansy", "(2d) Red Daffodil", "(2d) Yellow Daffodil", "(2d) Purple Daffodil", "(5d) Yellow Carnation"]
+            },
+            {
+                id: "bloom_yellow_balloon",
+                name: "Yellow Balloon Flower",
+                type: "Balloon Flower",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "8d",
+                bestSteps: ["(1d) Red Pansy", "(5d) Yellow Lotus", "(2d) Yellow Balloon Flower"],
+                recipes: ["(5d) Yellow Lotus"]
+            },
+            {
+                id: "bloom_purple_balloon",
+                name: "Purple Balloon Flower",
+                type: "Balloon Flower",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "9d",
+                bestSteps: ["(2d) Purple Daffodil", "(5d) Blue Carnation", "(2d) Purple Balloon Flower"],
+                recipes: ["(5d) Blue Carnation"]
+            },
+            {
+                id: "bloom_white_balloon",
+                name: "White Balloon Flower",
+                type: "Balloon Flower",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "6d",
+                bestSteps: ["(1d) Yellow Pansy", "(1d) Yellow Cosmos", "(2d) White Daffodil", "(2d) White Balloon Flower"],
+                recipes: ["(1d) White Cosmos", "(2d) Blue Daffodil", "(2d) White Daffodil", "(2d) White Balloon Flower"]
+            },
+            {
+                id: "bloom_blue_balloon",
+                name: "Blue Balloon Flower",
+                type: "Balloon Flower",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Cauliflower", "Parsnip", "Eggplant", "Kale", "(1d) Blue Pansy", "(1d) Blue Cosmos", "(1d) Purple Cosmos", "(2d) Blue Balloon Flower", "(2d) Celestial Frostbloom"]
+            },
+            {
+                id: "bloom_red_daffodil",
+                name: "Red Daffodil",
+                type: "Daffodil",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "3d",
+                bestSteps: ["(1d) Yellow Pansy", "(2d) Red Daffodil"],
+                recipes: ["(1d) Yellow Pansy", "(2d) Yellow Balloon Flower", "(5d) Red Carnation", "(5d) Primula Enigma"]
+            },
+            {
+                id: "bloom_yellow_daffodil",
+                name: "Yellow Daffodil",
+                type: "Daffodil",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "7d",
+                bestSteps: ["(5d) White Lotus", "(2d) Yellow Daffodil"],
+                recipes: ["(1d) Red Cosmos", "(5d) White Carnation", "(5d) White Lotus"]
+            },
+            {
+                id: "bloom_purple_daffodil",
+                name: "Purple Daffodil",
+                type: "Daffodil",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Radish", "Blueberry", "(2d) Red Balloon Flower", "(5d) Red Lotus", "(5d) Blue Lotus"]
+            },
+            {
+                id: "bloom_white_daffodil",
+                name: "White Daffodil",
+                type: "Daffodil",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "4d",
+                bestSteps: ["(1d) Yellow Pansy", "(1d) Yellow Cosmos", "(2d) White Daffodil"],
+                recipes: ["(1d) Yellow Cosmos", "(1d) Prism Petal"]
+            },
+            {
+                id: "bloom_blue_daffodil",
+                name: "Blue Daffodil",
+                type: "Daffodil",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "7d",
+                bestSteps: ["(5d) Purple Carnation", "(2d) Blue Daffodil"],
+                recipes: ["(2d) Purple Balloon Flower", "(5d) Purple Carnation", "(5d) Purple Lotus"]
+            },
+            {
+                id: "bloom_celestial_frostbloom",
+                name: "Celestial Frostbloom",
+                type: "Special",
+                seed: "Bloom Seed (2 Days)",
+                bestTime: "5d",
+                bestSteps: ["(1d) Yellow Pansy", "(1d) Yellow Cosmos", "(1d) White Pansy", "(2d) Celestial Frostbloom"],
+                recipes: ["(1d) White Pansy"]
+            },
+            {
+                id: "lily_red_carnation",
+                name: "Red Carnation",
+                type: "Carnation",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "8d",
+                bestSteps: ["(1d) Purple Cosmos", "(1d) Blue Pansy", "(1d) Purple Pansy", "(5d) Red Carnation"],
+                recipes: ["(1d) Purple Pansy"]
+            },
+            {
+                id: "lily_yellow_carnation",
+                name: "Yellow Carnation",
+                type: "Carnation",
+                seed: "Lily Seed (5 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Sunflower", "(1d) Yellow Cosmos", "(5d) Red Lotus", "(5d) White Carnation"]
+            },
+            {
+                id: "lily_purple_carnation",
+                name: "Purple Carnation",
+                type: "Carnation",
+                seed: "Lily Seed (5 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Eggplant", "Blueberry", "Apple", "(1d) Blue Cosmos", "(2d) Blue Balloon Flower", "(5d) Purple Lotus"]
+            },
+            {
+                id: "lily_white_carnation",
+                name: "White Carnation",
+                type: "Carnation",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "6d",
+                bestSteps: ["(1d) Yellow Pansy", "(5d) White Carnation"],
+                recipes: ["(1d) Yellow Pansy", "(1d) White Cosmos", "(1d) Prism Petal", "(2d) Yellow Daffodil", "(2d) Celestial Frostbloom"]
+            },
+            {
+                id: "lily_blue_carnation",
+                name: "Blue Carnation",
+                type: "Carnation",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "7d",
+                bestSteps: ["(2d) Purple Daffodil", "(5d) Blue Carnation"],
+                recipes: ["(2d) Purple Daffodil", "(2d) White Balloon Flower", "(5d) Primula Enigma"]
+            },
+            {
+                id: "lily_red_lotus",
+                name: "Red Lotus",
+                type: "Lotus",
+                seed: "Lily Seed (5 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Beetroot", "Radish", "(1d) Purple Cosmos", "(2d) Red Balloon Flower", "(2d) Yellow Balloon Flower", "(5d) Purple Carnation", "(5d) Yellow Carnation", "(5d) Red Carnation"]
+            },
+            {
+                id: "lily_yellow_lotus",
+                name: "Yellow Lotus",
+                type: "Lotus",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "6d",
+                bestSteps: ["(1d) Red Pansy", "(5d) Yellow Lotus"],
+                recipes: ["(1d) Red Pansy", "(1d) Red Cosmos", "(2d) Red Daffodil", "(5d) Yellow Lotus"]
+            },
+            {
+                id: "lily_purple_lotus",
+                name: "Purple Lotus",
+                type: "Lotus",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "12d",
+                bestSteps: ["(2d) Purple Daffodil", "(5d) Blue Carnation", "(5d) Purple Lotus"],
+                recipes: ["(5d) Blue Carnation"]
+            },
+            {
+                id: "lily_white_lotus",
+                name: "White Lotus",
+                type: "Lotus",
+                seed: "Lily Seed (5 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Cauliflower", "Parsnip", "Kale", "Banana", "(1d) White Pansy", "(2d) Blue Daffodil", "(5d) Blue Lotus", "(5d) White Lotus"]
+            },
+            {
+                id: "lily_blue_lotus",
+                name: "Blue Lotus",
+                type: "Lotus",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "7d",
+                bestSteps: ["(1d) Purple Cosmos", "(1d) Blue Pansy", "(5d) Blue Lotus"],
+                recipes: ["(1d) Blue Pansy", "(2d) White Daffodil"]
+            },
+            {
+                id: "lily_primula_enigma",
+                name: "Primula Enigma",
+                type: "Special",
+                seed: "Lily Seed (5 Days)",
+                bestTime: "14d",
+                bestSteps: ["(2d) Purple Daffodil", "(5d) Blue Carnation", "(2d) Purple Balloon Flower", "(5d) Primula Enigma"],
+                recipes: ["(2d) Purple Balloon Flower"]
+            }
+        ];
+
+        function validateAndNormalizeDatabase(rawList) {
+            const seenIds = new Set();
+            const cleanList = [];
+
+            rawList.forEach((item, index) => {
+                if (!item || typeof item !== 'object') return;
+                const safeId = String(item.id || `flower_${index}`).trim();
+
+                if (seenIds.has(safeId)) {
+                    console.error(`ID duplicado detectado: "${safeId}". Ignorado.`);
+                    return;
+                }
+                seenIds.add(safeId);
+
+                const name = String(item.name || 'Sem nome');
+                const type = String(item.type || 'Geral');
+                const seed = String(item.seed || 'Desconhecida');
+                const bestTime = item.bestTime ? String(item.bestTime) : null;
+                const bestSteps = Array.isArray(item.bestSteps) ? item.bestSteps.map(String) : [];
+                const recipes = Array.isArray(item.recipes) ? item.recipes.map(String) : [];
+
+                // Alias PT-BR para busca: o tipo interno "Special" é exibido como
+                // "Especial" no chip; sem o alias, buscar "especial" não achava nada.
+                // A base tem 33 flores, 11 sem bestTime (dado sem rota otimizada —
+                // comportamento esperado: o card apenas omite o botão "Melhor rota").
+                const typeAliases = type === 'Special' ? 'especial especiais' : '';
+                // Pré-calcula string de busca em minúsculo
+                const searchText = `${name} ${seed} ${type} ${typeAliases} ${recipes.join(' ')} ${bestSteps.join(' ')}`.toLowerCase();
+
+                cleanList.push({
+                    id: safeId,
+                    name,
+                    type,
+                    seed,
+                    bestTime,
+                    bestSteps,
+                    recipes,
+                    searchText
+                });
+            });
+
+            return cleanList;
+        }
+
+        const flowerDatabase = validateAndNormalizeDatabase(rawFlowerDatabase);
+
+        /* =========================================
+           8. STORAGE & APP STATE EM MEMÓRIA
+           ========================================= */
+        const STORAGE_KEY = 'flowerGuideInventory_v3';
+        const LEGACY_STORAGE_KEY = 'flowerGuideInventory_v2';
+        const THEME_KEY = 'flowerGuideTheme';
+
+        const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
+
+        function normalizeInventory(raw) {
+            if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+
+            const validIds = new Set(flowerDatabase.map(f => f.id));
+            const normalized = {};
+
+            Object.entries(raw).forEach(([id, value]) => {
+                // Aceita apenas valores que representam "coletado". Writes atuais gravam
+                // sempre `true`, mas dados legados/futuros podem trazer 1 ou "true".
+                // Qualquer outro formato (0, "false", objetos...) é descartado.
+                if (validIds.has(id) && (value === true || value === 1 || value === 'true')) {
+                    normalized[id] = true;
+                }
+            });
+
+            return normalized;
+        }
+
+        // Remove a chave legada (v2) sem nunca quebrar o boot: armazenamento pode
+        // estar bloqueado (ex.: modo privado) e lançar exceção.
+        function clearLegacyStorage() {
+            try {
+                localStorage.removeItem(LEGACY_STORAGE_KEY);
+            } catch (err) {
+                console.warn('Não foi possível remover a chave legada do armazenamento:', err);
+            }
+        }
+
+        // Lê e interpreta UMA versão do inventário de forma isolada.
+        // Uma falha aqui (armazenamento bloqueado ou JSON inválido) não impede tentar as outras versões.
+        function readInventoryVersion(key, { unwrapCollected }) {
+            let raw = null;
+            try {
+                raw = localStorage.getItem(key);
+            } catch (err) {
+                markStorageBlocked(err);
+                return { status: 'blocked' };
+            }
+            if (!raw) return { status: 'empty' };
+
+            let parsed;
+            try {
+                parsed = JSON.parse(raw);
+            } catch (err) {
+                console.error(`JSON inválido em "${key}". Versão ignorada, seguindo para a anterior:`, err);
+                return { status: 'corrupt' };
+            }
+
+            // O payload v3 grava `version: 3`. Se a chave atual trouxer outra versão
+            // (ex.: v4 futura), NÃO interpreta como v3 e NÃO trata como corrupção
+            // comum: retorna 'unsupported' para que o chamador nunca faça fallback
+            // para a v2 nem regrave por cima de um formato mais novo.
+            if (key === STORAGE_KEY && isPlainObject(parsed)
+                && 'version' in parsed && parsed.version !== 3) {
+                console.warn(`Versão não suportada em "${key}" (version=${parsed.version}). Leitura recusada para não destruir o formato.`);
+                return { status: 'unsupported', version: parsed.version };
+            }
+
+            let candidate;
+            if (unwrapCollected) {
+                candidate = isPlainObject(parsed) && isPlainObject(parsed.collected) ? parsed.collected : null;
+            } else {
+                // Formato antigo: pode ser { collected: {...} } ou o mapa direto.
+                candidate = isPlainObject(parsed) && isPlainObject(parsed.collected) ? parsed.collected : parsed;
+            }
+
+            if (!isPlainObject(candidate)) return { status: 'corrupt' };
+
+            const inventory = normalizeInventory(candidate);
+            return {
+                status: 'ok',
+                inventory,
+                needsRewrite: JSON.stringify(inventory) !== JSON.stringify(candidate),
+                rev: isPlainObject(parsed) && typeof parsed.rev === 'string' ? parsed.rev : null
+            };
+        }
+
+        // Versão corrente persistida + carimbo (rev) usado no controle de concorrência.
+        function readCurrentSnapshot() {
+            const result = readInventoryVersion(STORAGE_KEY, { unwrapCollected: true });
+            if (result.status === 'ok') return { inventory: result.inventory, rev: result.rev };
+            if (result.status === 'empty') return { inventory: {}, rev: null };
+            if (result.status === 'unsupported') return null; // formato futuro: existe, mas não serve como base
+            return null; // corrompido ou bloqueado: não serve como base
+        }
+
+        // `rewrite: false` é usado ao sincronizar com outra aba: um listener de
+        // storage não deve gravar, sob risco de eco entre abas.
+        function loadInventoryFromStorage({ rewrite = true } = {}) {
+            // Revalida um flag 'unsupported' obsoleto: se a chave atual já não
+            // contém formato futuro, a sessão volta a permitir gravação. Sem isso,
+            // uma v3 válida posterior nunca reativava os saves.
+            if (storageState.unsupported && !storedVersionIsUnsupported()) {
+                storageState.unsupported = false;
+                if (storageState.warningKind === 'unsupported') setStorageWarning(null);
+            }
+            // Versão atual primeiro...
+            const current = readInventoryVersion(STORAGE_KEY, { unwrapCollected: true });
+
+            // Formato futuro (ex.: version 4): nunca faz fallback para a v2 e nunca
+            // regrava. Qualquer uma dessas ações destruiria dados de uma versão mais
+            // nova do app. A sessão segue com coleção vazia em memória e avisada.
+            if (current.status === 'unsupported') {
+                storageState.unsupported = true;
+                if (storageState.available !== false) setStorageWarning('unsupported');
+                return {};
+            }
+
+            if (current.status === 'ok') {
+                // Uma v3 válida observada reativa a sessão: limpa um flag
+                // 'unsupported' obsoleto (ex.: outra aba removeu o formato futuro
+                // ou a chave foi regravada). Sem isso, a recusa ficava grudada
+                // para sempre e nenhum save posterior voltava a funcionar.
+                if (storageState.unsupported) storageState.unsupported = false;
+                storageState.lastRev = current.rev;
+                // Corrige dados antigos/sujos sem exibir feedback visual durante a carga.
+                // A v2 legada só é removida se a v3 já estava íntegra ou se o rewrite
+                // de correção confirmou sucesso: sem isso, uma falha de gravação
+                // (ex.: quota) apagaria o backup junto com a tentativa.
+                let persisted = true;
+                if (rewrite && current.needsRewrite) {
+                    const fix = saveInventoryToStorage(current.inventory, { silent: true });
+                    persisted = !!(fix && fix.ok);
+                }
+                // saveInventoryToStorage já limpa a legada no sucesso; este clear
+                // explícito cobre o caso em que nenhum rewrite foi necessário.
+                if (rewrite && persisted) clearLegacyStorage();
+                return current.inventory;
+            }
+
+            // ...e só então a versão antiga, de forma totalmente independente da atual.
+            const legacy = readInventoryVersion(LEGACY_STORAGE_KEY, { unwrapCollected: false });
+            if (legacy.status === 'ok') {
+                // Migração v2 -> v3: só apaga o backup DEPOIS de confirmar que a
+                // gravação na v3 funcionou. Se o save falhar, a v2 permanece como
+                // única cópia válida para a próxima tentativa.
+                // (O save com sucesso já limpa a legada internamente; aqui o ponto
+                // é NÃO limpar quando ele falha.)
+                let migrated = true;
+                if (rewrite) {
+                    const r = saveInventoryToStorage(legacy.inventory, { silent: true });
+                    migrated = !!(r && r.ok);
+                    if (!migrated) {
+                        // Falha de migração: o dado vive só em memória. Sem tombstones,
+                        // o próximo commit com dirty=true rebaseava sobre o snapshot
+                        // vazio e apagava o inventário migrado. Registra a intenção
+                        // para que rebaseWithPending a preserve (dirty já foi ligado
+                        // pelo save que falhou / recusou formato futuro).
+                        trackPendingOps(Object.keys(legacy.inventory), []);
+                        storageState.dirty = true;
+                    }
+                } else {
+                    // Sincronização entre abas (rewrite:false) não persiste: o dado
+                    // migrado ainda não está no disco, então também precisa de
+                    // tombstones + dirty para não ser perdido no próximo commit.
+                    trackPendingOps(Object.keys(legacy.inventory), []);
+                    storageState.dirty = true;
+                }
+                // Migração normal (v3 vazia + v2 válida) é silenciosa. Mas se a v3
+                // EXISTIA e estava ilegível, a v2 é um snapshot antigo: avisa o
+                // rollback em vez de fingir que nada aconteceu. O aviso é aplicado
+                // DEPOIS do save, pois um save com sucesso limpa avisos. Se a
+                // migração FALHOU, mantém o 'unsaved' que o save já exibiu (mais
+                // preciso: o dado está em memória, não persistido).
+                if (current.status === 'corrupt' && storageState.available !== false
+                    && (!rewrite || migrated)) {
+                    setStorageWarning('rollback');
+                }
+                return legacy.inventory;
+            }
+
+            // Nenhuma versão recuperável e pelo menos uma corrompida: o progresso salvo
+            // foi perdido. O usuário precisa saber disso antes de recomeçar do zero sem
+            // entender por quê. 'blocked' já foi sinalizado durante a leitura e prevalece.
+            if (storageState.available !== false
+                && (current.status === 'corrupt' || legacy.status === 'corrupt')) {
+                setStorageWarning('corrupt');
+            }
+            return {};
+        }
+
+        // available: null = ainda não testado | true = gravando | false = bloqueado pelo navegador
+        // dirty: existem alterações locais que não chegaram ao armazenamento.
+        // FONTE ÚNICA de verdade sobre "há alterações não salvas" — não manter uma segunda
+        // flag paralela (elas dessincronizavam após recuperações parciais de gravação).
+        // unsupported: a chave v3 contém um formato mais novo (ex.: version 4) que este
+        // código não sabe interpretar; enquanto ativo, nenhuma gravação pode ocorrer.
+        // pending: operações locais ainda não confirmadas no disco. Um booleano `dirty`
+        // sozinho não distingue "chave ausente porque nunca existiu" de "chave ausente
+        // porque o usuário a excluiu" — o merge por spread `{...remoto, ...local}`
+        // ressuscitava exclusões não salvas. Os tombstones abaixo preservam a intenção.
+        const storageState = {
+            available: null, lastRev: null, warningKind: null, dirty: false,
+            unsupported: false,
+            pending: { added: {}, removed: {} }
+        };
+
+        // Registra a intenção (add/remove) de forma idempotente: marcar e desmarcar a
+        // mesma flor em sequência cancela o par, em vez de acumular contradições.
+        function trackPendingOps(added, removed) {
+            const p = storageState.pending;
+            (added || []).forEach(id => { p.added[id] = true; delete p.removed[id]; });
+            (removed || []).forEach(id => { delete p.added[id]; p.removed[id] = true; });
+        }
+
+        function clearPendingOps() {
+            storageState.pending.added = {};
+            storageState.pending.removed = {};
+        }
+
+        // Reaplica a intenção pendente sobre um snapshot remoto: exclusões continuam
+        // sendo exclusões mesmo quando o estado local em memória é `{}`.
+        function rebaseWithPending(snapshotInventory) {
+            const rebased = { ...(snapshotInventory || {}) };
+            Object.keys(storageState.pending.removed).forEach(id => { delete rebased[id]; });
+            Object.keys(storageState.pending.added).forEach(id => { rebased[id] = true; });
+            return normalizeInventory(rebased);
+        }
+
+        // Dois estados distintos: ambiente sem persistência x alterações pendentes.
+        const WARNING_MESSAGES = {
+            blocked: 'Persistência indisponível — o navegador bloqueou o armazenamento local. Nada do que você marcar será salvo.',
+            unsaved: 'Alterações não salvas — não foi possível gravar agora. Suas marcações serão perdidas ao recarregar a página.',
+            corrupt: 'Os dados salvos estão corrompidos e não puderam ser lidos — a coleção aparece vazia. Ao marcar uma flor, o registro antigo será substituído.',
+            rollback: 'Os dados atuais estavam corrompidos e uma versão antiga foi restaurada — pode estar faltando progresso recente. Verifique a coleção.',
+            unsupported: 'Esta coleção foi salva por uma versão mais nova do app e não pode ser lida aqui — nada será alterado ou sobrescrito. Abra a versão atualizada para continuar.'
+        };
+
+        // kind: 'blocked' | 'unsaved' | 'corrupt' | 'rollback' | 'unsupported' | null (oculto)
+        function setStorageWarning(kind = null) {
+            const warning = document.getElementById('saveWarning');
+            if (!warning) return;
+            storageState.warningKind = kind;
+
+            if (!kind) {
+                warning.classList.add('hidden');
+                return;
+            }
+
+            // kind desconhecido nunca deve resultar em aviso vazio: ignora.
+            if (!WARNING_MESSAGES[kind]) return;
+
+            const textEl = warning.querySelector('[data-warning-text]');
+            if (textEl) textEl.textContent = WARNING_MESSAGES[kind];
+            warning.dataset.kind = kind;
+            warning.classList.remove('hidden');
+        }
+
+        // Falha de leitura na abertura: avisa na hora que a persistência está indisponível,
+        // sem esperar a primeira gravação falhar.
+        function markStorageBlocked(err) {
+            if (storageState.available === false) return;
+            storageState.available = false;
+            console.warn("Armazenamento local indisponível:", err);
+            setStorageWarning('blocked');
+        }
+
+        let savePulseTimer = null;
+
+        // Uma falha precisa apagar o "Salvo" pendente: os dois estados nunca podem coexistir.
+        function cancelSavePulse() {
+            clearTimeout(savePulseTimer);
+            savePulseTimer = null;
+            const indicator = document.getElementById('saveIndicator');
+            if (indicator) indicator.classList.remove('visible');
+        }
+
+        function triggerSavePulse() {
+            const ind = document.getElementById('saveIndicator');
+            ind.classList.add('visible');
+            clearTimeout(savePulseTimer);
+            savePulseTimer = setTimeout(() => ind.classList.remove('visible'), 1200);
+        }
+
+        // Sonda silenciosa da chave v3: true apenas se houver um `version`
+        // explícito e diferente de 3. Qualquer outro caso (ausente, ilegível,
+        // bloqueado, sem campo version) devolve false — a análise detalhada
+        // pertence a readInventoryVersion; aqui só interessa não destruir futuro.
+        function storedVersionIsUnsupported() {
+            let raw = null;
+            try {
+                raw = localStorage.getItem(STORAGE_KEY);
+            } catch (err) {
+                return false;
+            }
+            if (!raw) return false;
+            try {
+                const parsed = JSON.parse(raw);
+                return !!(isPlainObject(parsed) && 'version' in parsed && parsed.version !== 3);
+            } catch (err) {
+                return false;
+            }
+        }
+
+        // Mutex síncrono entre abas para tornar o check-then-write atômico.
+        // localStorage não tem CAS: dois saves que leem o mesmo rev e gravam em
+        // sequência fazem o último sobrescrever o primeiro (lost update). O lock
+        // serializa a seção `expectedRev? + setItem` entre abas que usam o mesmo
+        // protocolo. Expira em 2s para não travar se uma aba morrer com o lock.
+        // O listener de 'storage' ignora esta chave (filtra por STORAGE_KEY).
+        const INVENTORY_LOCK_KEY = 'flowerGuideInventory_v3.lock';
+
+        function acquireInventoryLock(timeoutMs = 600) {
+            const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+            const deadline = Date.now() + timeoutMs;
+            while (Date.now() < deadline) {
+                let current = null;
+                try {
+                    current = localStorage.getItem(INVENTORY_LOCK_KEY);
+                } catch (err) {
+                    return null; // armazenamento bloqueado: segue best-effort
+                }
+                if (current) {
+                    try {
+                        const parsed = JSON.parse(current);
+                        if (parsed && parsed.exp && parsed.exp > Date.now() && parsed.token) {
+                            const wait = 5 + Math.random() * 12;
+                            const start = Date.now();
+                            while (Date.now() - start < wait) { /* backoff síncrono curto */ }
+                            continue;
+                        }
+                    } catch (err) {
+                        // lock corrompido: tenta tomar posse abaixo
+                    }
+                }
+                try {
+                    const payload = JSON.stringify({ token, exp: Date.now() + 2000 });
+                    localStorage.setItem(INVENTORY_LOCK_KEY, payload);
+                    const check = localStorage.getItem(INVENTORY_LOCK_KEY);
+                    if (check === payload) return token;
+                } catch (err) {
+                    return null;
+                }
+                const wait = 5 + Math.random() * 15;
+                const start = Date.now();
+                while (Date.now() - start < wait) { /* perdeu a corrida, tenta de novo */ }
+            }
+            return null;
+        }
+
+        function releaseInventoryLock(token) {
+            if (!token) return;
+            try {
+                const cur = localStorage.getItem(INVENTORY_LOCK_KEY);
+                if (!cur) return;
+                try {
+                    const parsed = JSON.parse(cur);
+                    if (parsed && parsed.token === token) localStorage.removeItem(INVENTORY_LOCK_KEY);
+                } catch (err) {
+                    try { localStorage.removeItem(INVENTORY_LOCK_KEY); } catch (e) { /* ignora */ }
+                }
+            } catch (err) { /* ignora */ }
+        }
+
+        // Grava e informa o resultado — atualizar a tela nunca conta como persistência.
+        // expectedRev ativa o controle otimista de concorrência entre abas.
+        function saveInventoryToStorage(inv, options = {}) {
+            const safeInventory = normalizeInventory(inv);
+
+            // Guarda contra formato futuro: se a v3 contém `version` diferente de 3
+            // (gravada por uma versão mais nova do app, talvez em outra aba depois
+            // do boot), recusa a gravação em vez de destruir o formato.
+            if (storedVersionIsUnsupported()) {
+                storageState.unsupported = true;
+                // Recusa também é dado não persistido: marca dirty para que o
+                // beforeunload/pagehide avise e o próximo commit rebaseie em vez
+                // de perder silenciosamente as marcações.
+                storageState.dirty = true;
+                cancelSavePulse();
+                if (storageState.available !== false) setStorageWarning('unsupported');
+                return { ok: false, conflict: false, unsupported: true };
+            }
+            // Flag obsoleta (a chave já voltou a ser v3 válida): reativa os saves.
+            if (storageState.unsupported) {
+                storageState.unsupported = false;
+                if (storageState.warningKind === 'unsupported') setStorageWarning(null);
+            }
+
+            // Seção crítica atômica entre abas: check expectedRev + write sob lock.
+            const useLock = options.expectedRev !== undefined;
+            const lockToken = useLock ? acquireInventoryLock(600) : null;
+            // Timeout do lock não bloqueia para sempre: rele sem lock — se o rev
+            // mudou, é conflito real e o retry do commit tenta de novo em vez de
+            // sobrescrever às cegas. Sem expectedRev (migração/boot) segue
+            // best-effort mesmo sem lock.
+            if (useLock && lockToken === null) {
+                // Não foi possível serializar (contenção ou armazenamento
+                // bloqueado). Rele uma vez sem lock: se o rev mudou, é conflito
+                // real; se igual, segue para a gravação best-effort.
+                try {
+                    const probe = readCurrentSnapshot();
+                    if (probe && probe.rev !== options.expectedRev) {
+                        return { ok: false, conflict: true, inventory: probe.inventory, rev: probe.rev };
+                    }
+                } catch (err) { /* segue best-effort */ }
+            }
+            try {
+                if (options.expectedRev !== undefined) {
+                    const snapshot = readCurrentSnapshot();
+                    if (snapshot && snapshot.rev !== options.expectedRev) {
+                        // Outra aba gravou depois da versão usada como base.
+                        return { ok: false, conflict: true, inventory: snapshot.inventory, rev: snapshot.rev };
+                    }
+                }
+
+                const rev = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+                const payload = { version: 3, updated: Date.now(), rev, collected: safeInventory };
+
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+                } catch (err) {
+                    console.error("Erro ao salvar no localStorage:", err);
+                    cancelSavePulse();
+                    storageState.dirty = true;
+                    if (err && err.name === 'SecurityError') storageState.available = false;
+                    setStorageWarning(storageState.available === false ? 'blocked' : 'unsaved');
+                    return { ok: false, conflict: false };
+                }
+
+                storageState.available = true;
+                // Gravação v3 válida também reativa a sessão (caso o aviso
+                // 'unsupported' ainda estivesse visível por flag obsoleta).
+                storageState.unsupported = false;
+                storageState.dirty = false;
+                clearPendingOps();
+                storageState.lastRev = rev;
+                // A v3 foi gravada com sucesso: a v2 legada não tem mais serventia.
+                // Removê-la aqui (além do load) fecha a janela de rollback silencioso
+                // para o caso em que a v3 já era válida e a legada nunca foi consultada.
+                // `options.silent` refere-se apenas ao pulso visual, não ao cleanup.
+                if (!options.keepLegacy) clearLegacyStorage();
+                setStorageWarning(null);
+                if (!options.silent) triggerSavePulse();
+                return { ok: true, conflict: false, rev };
+            } finally {
+                releaseInventoryLock(lockToken);
+            }
+        }
+
+        const MAX_COMMIT_ATTEMPTS = 4;
+
+        // Aplica uma alteração local sobre a base mais recente e grava.
+        // Se outra aba gravou no meio, refaz o merge sobre o estado novo em vez de sobrescrever.
+        // options.replace=true (reset): impõe o estado exato em vez de fundir delta —
+        // flores adicionadas por outra aba entre o clique e o commit também são
+        // removidas, em vez de sobreviverem ao reset.
+        function commitInventoryChange(applyDelta, options = {}) {
+            let adoptedRemote = false;
+            const isReplace = !!options.replace;
+            let lastNext = null;
+
+            for (let attempt = 1; attempt <= MAX_COMMIT_ATTEMPTS; attempt++) {
+                const snapshot = readCurrentSnapshot();
+                // Snapshot nulo = formato futuro, corrompido ou bloqueado: sem base
+                // remota confiável; tenta gravar a partir do estado em memória (o
+                // save recusa sozinho se for formato futuro).
+                if (snapshot) {
+                    const remoteIsNewer = snapshot.rev !== storageState.lastRev;
+
+                    // Pendências locais que nunca chegaram ao disco também obrigam a rebasear.
+                    // Antes, `dirty` só era consultado DENTRO do ramo do rev: depois de uma
+                    // falha de gravação o rev não mudava, a base voltava a ser a do
+                    // armazenamento e a alteração pendente era sobrescrita na tentativa seguinte.
+                    const hasLocalPending = storageState.dirty;
+
+                    if (remoteIsNewer || hasLocalPending) {
+                        storageState.lastRev = snapshot.rev;
+                        // Rebase via tombstones pendentes, NÃO por spread: `{...remoto,
+                        // ...local}` não representa deleção (chave ausente nos dois
+                        // sentidos) e ressuscitava exclusões ainda não salvas.
+                        // No modo replace o rebase é ignorado: o delta final impõe
+                        // o estado exato de qualquer forma.
+                        if (!isReplace) {
+                            appState.inventory = hasLocalPending
+                                ? rebaseWithPending(snapshot.inventory)
+                                : snapshot.inventory;
+                        } else if (remoteIsNewer) {
+                            appState.inventory = snapshot.inventory;
+                        }
+                        // Só precisa redesenhar quando a base remota mudou; com pendência local
+                        // a grade já reflete o estado em memória.
+                        adoptedRemote = remoteIsNewer;
+
+                        if (remoteIsNewer) {
+                            // O histórico descreve uma sequência de estados que não é mais a
+                            // atual (mesma política do listener de "storage"): desfazer sobre
+                            // uma base trocada poderia aplicar a direção errada.
+                            appState.history = [];
+                        }
+                    }
+                }
+
+                const next = isReplace
+                    ? normalizeInventory(applyDelta(null))
+                    : normalizeInventory(applyDelta(appState.inventory));
+                lastNext = next;
+                const result = saveInventoryToStorage(next, { ...options, expectedRev: storageState.lastRev });
+
+                if (result.ok) {
+                    appState.inventory = next;
+                    return { ok: true, inventory: next, attempts: attempt, adoptedRemote };
+                }
+
+                if (result.unsupported) {
+                    // Formato futuro: nada foi gravado e nada pode ser fundido.
+                    // Mantém a intenção em memória (otimista) + dirty para o
+                    // unload avisar; o aviso 'unsupported' prevalece sobre 'unsaved'.
+                    appState.inventory = next;
+                    storageState.dirty = true;
+                    return { ok: false, unsupported: true, inventory: next, attempts: attempt, adoptedRemote };
+                }
+
+                if (!result.conflict) {
+                    // Falha real de gravação: mantém em memória; o aviso já está na UI.
+                    appState.inventory = next;
+                    return { ok: false, inventory: next, attempts: attempt, adoptedRemote };
+                }
+
+                // Conflito: adota a versão da outra aba e reaplica a intenção pendente
+                // sobre ela (mesmo motivo do rebase acima: spread ressuscita exclusão).
+                storageState.lastRev = result.rev;
+                if (!isReplace) {
+                    appState.inventory = storageState.dirty
+                        ? rebaseWithPending(result.inventory)
+                        : result.inventory;
+                } else {
+                    appState.inventory = result.inventory;
+                    // Em modo replace, garante que um reset que falhou adiante
+                    // continue removendo as chaves remotas observadas: registra-as
+                    // como remoção pendente para o próximo rebase/flush.
+                    trackPendingOps([], Object.keys(result.inventory));
+                    storageState.dirty = true;
+                }
+                adoptedRemote = true;
+                // Mesma política do ramo acima: a base mudou por baixo do histórico.
+                appState.history = [];
+            }
+
+            console.warn("Gravação não convergiu após várias tentativas de merge.");
+            storageState.dirty = true;
+            if (storageState.unsupported) {
+                if (storageState.available !== false) setStorageWarning('unsupported');
+            } else {
+                setStorageWarning('unsaved');
+            }
+            // Preserva a intenção local em memória (otimista) em vez de expor o
+            // snapshot remoto puro: sem isso, o estado interno voltava ao remoto
+            // mas o chamador atualizava o card como se tivesse aplicado — grade e
+            // contadores divergiam. O rebase reaplica os tombstones pendentes
+            // (que incluem o delta atual) sobre o último remoto.
+            // No modo replace, a intenção é o estado exato (reset => {}): mantém o
+            // otimista em vez do remoto puro, senão a grade voltava cheia mas o
+            // toast dizia "reiniciado nesta sessão".
+            if (!isReplace) {
+                try {
+                    const last = readCurrentSnapshot();
+                    appState.inventory = last
+                        ? rebaseWithPending(last.inventory)
+                        : rebaseWithPending(appState.inventory);
+                } catch (err) {
+                    appState.inventory = rebaseWithPending(appState.inventory);
+                }
+            } else if (lastNext) {
+                appState.inventory = lastNext;
+            }
+            return { ok: false, inventory: appState.inventory, attempts: MAX_COMMIT_ATTEMPTS, adoptedRemote };
+        }
+
+        // Estado Único da Aplicação em Memória
+        const appState = {
+            inventory: loadInventoryFromStorage(),
+            filters: {
+                seed: '',
+                type: '',
+                search: '',
+                sort: 'default'
+            },
+            history: [],
+            toastTimeout: null,
+            searchTimer: null
+            // "Há alterações não salvas" é lido de storageState.dirty (fonte única).
+        };
+
+        // Devolve o resultado real da gravação: quem chama precisa dele para não
+        // anunciar como salvo algo que o navegador recusou.
+        // A alteração entra como DELTA sobre a base mais recente, para que a gravação
+        // de uma aba não apague o que a outra marcou.
+        // options.replace=true (reset): impõe o estado exato em vez de fundir —
+        // remove inclusive flores que outra aba adicionou após a leitura local.
+        function setInventoryState(newInv, options = {}) {
+            const isReplace = !!options.replace;
+            const next = normalizeInventory(newInv);
+            const previous = appState.inventory || {};
+
+            if (isReplace) {
+                // Reset: descarta adds pendentes (intenção é esvaziar) e marca
+                // todas as chaves locais como remoção; chaves remotas observadas
+                // no commit também viram tombstones (ver commitInventoryChange).
+                storageState.pending.added = {};
+                trackPendingOps([], Object.keys(previous));
+            } else {
+                const added = Object.keys(next).filter(id => !previous[id]);
+                const removed = Object.keys(previous).filter(id => !next[id]);
+
+                // Registra a intenção ANTES do commit para que um rebase no meio do
+                // caminho (outra aba gravou, ou dirty de falha anterior) reaplique
+                // adds E removes — inclusive o reset para `{}`. Limpo no save ok.
+                trackPendingOps(added, removed);
+            }
+
+            const commitFn = isReplace
+                ? () => normalizeInventory(newInv)
+                : (base) => {
+                    // Recomputa o delta contra a base atual do commit (não contra o
+                    // snapshot obsoleto de entrada): mescla add/remove sem
+                    // ressuscitar exclusões.
+                    const prevKeys = new Set(Object.keys(previous));
+                    const nextKeys = new Set(Object.keys(next));
+                    const merged = { ...base };
+                    nextKeys.forEach(id => { if (!prevKeys.has(id)) merged[id] = true; });
+                    prevKeys.forEach(id => { if (!nextKeys.has(id)) delete merged[id]; });
+                    return merged;
+                };
+
+            const result = commitInventoryChange(commitFn, { ...options, replace: isReplace });
+
+            appState.inventory = result.inventory;
+            // storageState.dirty já foi atualizado por saveInventoryToStorage/commitInventoryChange:
+            // uma segunda flag aqui só criava divergência entre as duas.
+
+            // Uma base remota adotada no meio do caminho deixa a grade desatualizada:
+            // redesenha em vez de confiar só no ajuste incremental do card clicado.
+            if (result.adoptedRemote) renderView();
+
+            return result;
+        }
+
+        /* =========================================
+           9. TOAST & CICLO DE VIDA DO UNDO
+           ========================================= */
+        function getLatestHistoryAction() {
+            return appState.history.length > 0
+                ? appState.history[appState.history.length - 1]
+                : null;
+        }
+
+        function hideToastUndo() {
+            const toastUndoBtn = document.getElementById('toastUndoBtn');
+            toastUndoBtn.classList.add('hidden');
+            toastUndoBtn.removeAttribute('aria-label');
+        }
+
+        // Fecha a notificação e cancela o temporizador pendente.
+        function dismissToast() {
+            clearTimeout(appState.toastTimeout);
+            appState.toastTimeout = null;
+            document.getElementById('toast').classList.remove('show');
+            hideToastUndo();
+        }
+
+        function showToast(message, actionData = getLatestHistoryAction()) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastText');
+
+            clearTimeout(appState.toastTimeout);
+            toastText.textContent = message;
+
+            if (actionData) {
+                const toastUndoBtn = document.getElementById('toastUndoBtn');
+                toastUndoBtn.classList.remove('hidden');
+                toastUndoBtn.setAttribute('aria-label', `Desfazer alteração em ${actionData.name}`);
+            } else {
+                hideToastUndo();
+            }
+
+            toast.classList.add('show');
+
+            appState.toastTimeout = setTimeout(dismissToast, 4000);
+        }
+
+        // Insere o cartão na posição que ele ocupa em getFilteredFlowers(),
+        // em vez de sempre empurrá-lo para o fim da grade de destino.
+        function insertCardInOrder(targetGrid, card) {
+            const isCollected = card.classList.contains('collected');
+            const orderedIds = getFilteredFlowers()
+                .filter(f => (!!appState.inventory[f.id]) === isCollected)
+                .map(f => f.id);
+
+            const index = orderedIds.indexOf(card.dataset.id);
+            if (index < 0) {
+                targetGrid.appendChild(card);
+                return;
+            }
+
+            // Percorre TODOS os índices seguintes até achar o primeiro card que realmente
+            // exista no DOM da grade alvo. Olhar só para orderedIds[index + 1] fazia a busca
+            // retornar null quando o vizinho imediato estava ausente (ex.: em outra partição
+            // da grade) e o card era jogado no fim, corrompendo a ordem.
+            for (let i = index + 1; i < orderedIds.length; i++) {
+                const nextCard = targetGrid.querySelector(
+                    `.flower-card[data-id="${CSS.escape(orderedIds[i])}"]`
+                );
+                if (nextCard) {
+                    targetGrid.insertBefore(card, nextCard);
+                    return;
+                }
+            }
+
+            // Nenhum sucessor presente: a posição correta é o fim da grade.
+            targetGrid.appendChild(card);
+        }
+
+        // Mantém rótulos e visibilidade das duas seções coerentes com o DOM real das grades.
+        // Sem o rótulo em "Pendentes", duas listas cheias de flores ficavam indistinguíveis.
+        function syncSections() {
+            const missingCount = document.getElementById('missingGrid').children.length;
+            const collectedCount = document.getElementById('collectedGrid').children.length;
+
+            document.getElementById('missingSection').classList.toggle('hidden', missingCount === 0);
+            document.getElementById('collectedSection').classList.toggle('hidden', collectedCount === 0);
+            document.getElementById('missingLabel').textContent = `Pendentes (${missingCount})`;
+            document.getElementById('collectedLabel').textContent = `Cultivadas (${collectedCount})`;
+        }
+
+        function updateCardState(id, isCollected) {
+            const card = document.querySelector(`.flower-card[data-id="${CSS.escape(id)}"]`);
+            if (!card) return null;
+
+            // O nó é movido, nunca recriado: o estado expandido ("melhor rota") sobrevive à troca de grade.
+            // Como mover um nó desfoca o elemento ativo, guardamos e restauramos o foco.
+            const focusedEl = card.contains(document.activeElement) ? document.activeElement : null;
+
+            const checkbox = card.querySelector('.checkbox-btn');
+            card.classList.toggle('collected', isCollected);
+
+            if (checkbox) {
+                checkbox.setAttribute('aria-checked', isCollected ? 'true' : 'false');
+                checkbox.setAttribute(
+                    'aria-label',
+                    isCollected
+                        ? `Desmarcar ${card.querySelector('.flower-name')?.textContent || id}`
+                        : `Marcar ${card.querySelector('.flower-name')?.textContent || id} como cultivada`
+                );
+            }
+
+            const targetGrid = isCollected
+                ? document.getElementById('collectedGrid')
+                : document.getElementById('missingGrid');
+            if (targetGrid && card.parentElement !== targetGrid) {
+                insertCardInOrder(targetGrid, card);
+            }
+
+            if (focusedEl && focusedEl.isConnected) focusedEl.focus();
+
+            // Atualiza rótulos e visibilidade das duas seções a partir do DOM real.
+            syncSections();
+
+            return checkbox;
+        }
+
+        function updateProgressOnly() {
+            renderGlobalProgress();
+            const filtered = getFilteredFlowers();
+            const filteredCollectedCount = filtered.filter(f => !!appState.inventory[f.id]).length;
+            renderFilteredProgress(filtered.length, filteredCollectedCount);
+        }
+
+        document.getElementById('toastUndoBtn').addEventListener('click', () => {
+            const action = getLatestHistoryAction();
+            if (!action) {
+                // Sem ação pendente não há o que desfazer: apenas fecha a notificação.
+                dismissToast();
+                return;
+            }
+
+            appState.history.pop();
+            const updatedInv = { ...appState.inventory };
+
+            if (action.prev) {
+                updatedInv[action.id] = true;
+            } else {
+                delete updatedInv[action.id];
+            }
+
+            const persisted = setInventoryState(updatedInv).ok;
+
+            // Usa o estado efetivo em memória (pode divergir do pretendido se o
+            // commit adotou base remota e não convergiu): card e contadores nunca
+            // podem mostrar "aplicado" quando o interno ficou remoto.
+            const effectiveUndo = !!appState.inventory[action.id];
+            const restoredCheckbox = updateCardState(action.id, effectiveUndo);
+            updateProgressOnly();
+
+            // O foco precisa ser capturado ANTES do showToast: ao desfazer a última ação
+            // o botão é escondido, e esconder um elemento com foco o devolve ao <body> —
+            // a comparação com activeElement depois disso nunca batería.
+            const focusWasOnUndo = document.activeElement === document.getElementById('toastUndoBtn');
+
+            showToast(
+                persisted
+                    ? `Desfeita alteração em: ${action.name}`
+                    : `Desfeita alteração em: ${action.name} — não foi possível salvar; será perdida ao recarregar a página.`,
+                getLatestHistoryAction()
+            );
+
+            if (focusWasOnUndo) {
+                if (restoredCheckbox) {
+                    restoredCheckbox.focus();
+                } else {
+                    // Card ausente (flor fora dos filtros atuais): aterrissagem de teclado previsível.
+                    document.getElementById('searchInput').focus();
+                }
+            }
+        });
+
+        function toggleFlowerStatus(id) {
+            const flower = flowerDatabase.find(f => f.id === id);
+            if (!flower) return;
+
+            const wasCollected = !!appState.inventory[id];
+            const nextState = !wasCollected;
+            const updatedInv = { ...appState.inventory };
+
+            if (nextState) {
+                updatedInv[id] = true;
+            } else {
+                delete updatedInv[id];
+            }
+
+            appState.history.push({ id, prev: wasCollected, name: flower.name });
+            // Undo é intencionalmente volátil e curto: 20 passos em memória, sem
+            // persistência. Recarregar a página, resetar ou receber estado de outra
+            // aba zera o histórico — o toast de 4s é a única janela de desfazer.
+            if (appState.history.length > 20) appState.history.shift();
+
+            // A alteração vale em memória antes de qualquer coisa: o card já aparece
+            // marcado. A mensagem só confirma a gravação se ela realmente aconteceu.
+            // O card reflete o estado EFETIVO (result.inventory), não o pretendido:
+            // após 4 conflitos sem convergência o interno preserva a intenção via
+            // rebase, e o card acompanha — nunca mostra sucesso sobre base remota.
+            const commitResult = setInventoryState(updatedInv);
+            const persisted = !!(commitResult && commitResult.ok);
+            const effectiveState = !!appState.inventory[id];
+            const checkbox = updateCardState(id, effectiveState);
+            updateProgressOnly();
+
+            const statusLabel = effectiveState ? `✓ ${flower.name} cultivada` : `↺ ${flower.name} desmarcada`;
+            showToast(
+                persisted
+                    ? statusLabel
+                    : `${statusLabel} — não foi possível salvar; a alteração será perdida ao recarregar a página.`,
+                getLatestHistoryAction()
+            );
+
+            // O mesmo elemento DOM é preservado; o foco não é perdido.
+            if (checkbox) checkbox.focus();
+        }
+
+        /* =========================================
+           10. CRIAÇÃO DE CARDS DOM
+           ========================================= */
+        // Expansões ("Mostrar todas" / "Melhor rota") que devem sobreviver a re-renders
+        // completos: renderView recria todos os nós, e mover um card só preserva o
+        // estado no toggle individual. IDs são finitos (a própria base de flores).
+        const expandedCards = { recipes: new Set(), bestPath: new Set() };
+
+        function createFlowerCard(flower, isCollected) {
+            const card = document.createElement('article');
+            card.className = `flower-card ${isCollected ? 'collected' : ''}`;
+            card.dataset.id = flower.id;
+
+            const header = document.createElement('div');
+            header.className = 'flower-header';
+
+            const titleBox = document.createElement('div');
+            titleBox.className = 'flower-title-box';
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'flower-name';
+            nameEl.textContent = flower.name;
+
+            const badgeRow = document.createElement('div');
+            badgeRow.className = 'flower-badge-row';
+
+            const seedTag = document.createElement('span');
+            seedTag.className = 'tag';
+            seedTag.textContent = flower.seed.split(' (')[0];
+
+            const typeTag = document.createElement('span');
+            typeTag.className = 'tag';
+            typeTag.textContent = flower.type;
+
+            badgeRow.appendChild(seedTag);
+            badgeRow.appendChild(typeTag);
+            titleBox.appendChild(nameEl);
+            titleBox.appendChild(badgeRow);
+
+            const checkBtn = document.createElement('button');
+            checkBtn.type = 'button';
+            checkBtn.className = 'checkbox-btn';
+            checkBtn.setAttribute('role', 'checkbox');
+            checkBtn.setAttribute('aria-checked', isCollected ? 'true' : 'false');
+            checkBtn.setAttribute(
+                'aria-label',
+                isCollected
+                    ? `Desmarcar ${flower.name}`
+                    : `Marcar ${flower.name} como cultivada`
+            );
+
+            // O ícone é isolado e escondido por CSS: fora do fluxo de leitura e invisível
+            // enquanto o checkbox estiver desmarcado, mesmo em alto contraste.
+            const checkIcon = document.createElement('span');
+            checkIcon.className = 'check-icon';
+            checkIcon.setAttribute('aria-hidden', 'true');
+            checkIcon.textContent = '✓';
+            checkBtn.appendChild(checkIcon);
+
+            checkBtn.addEventListener('click', () => {
+                toggleFlowerStatus(flower.id);
+            });
+
+            header.appendChild(titleBox);
+            header.appendChild(checkBtn);
+            card.appendChild(header);
+
+            if (flower.recipes.length > 0) {
+                const recipeBox = document.createElement('div');
+                recipeBox.className = 'recipe-box';
+
+                const recipeHeader = document.createElement('span');
+                recipeHeader.className = 'recipe-header';
+                recipeHeader.textContent = `Cruzamentos (${flower.recipes.length}):`;
+                recipeBox.appendChild(recipeHeader);
+
+                const recipeList = document.createElement('ul');
+                recipeList.className = 'recipe-list';
+
+                const LIMIT = 3;
+                const hasOverflow = flower.recipes.length > LIMIT;
+                const visibleRecipes = hasOverflow ? flower.recipes.slice(0, LIMIT) : flower.recipes;
+
+                visibleRecipes.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = `+ ${rec}`;
+                    recipeList.appendChild(li);
+                });
+                recipeBox.appendChild(recipeList);
+
+                if (hasOverflow) {
+                    const expandBtn = document.createElement('button');
+                    expandBtn.type = 'button';
+                    expandBtn.className = 'expand-btn';
+
+                    // Expõe a relação botão -> lista e o estado (recolhido/estendido) para
+                    // tecnologias assistivas, que antes não sabiam se a lista havia crescido.
+                    recipeList.id = `recipes-${flower.id}`;
+                    expandBtn.setAttribute('aria-controls', recipeList.id);
+                    expandBtn.setAttribute('aria-expanded', 'false');
+                    let expanded = expandedCards.recipes.has(flower.id);
+
+                    const renderRecipeList = () => {
+                        recipeList.innerHTML = '';
+                        const currentList = expanded ? flower.recipes : flower.recipes.slice(0, LIMIT);
+                        currentList.forEach(rec => {
+                            const li = document.createElement('li');
+                            li.textContent = `+ ${rec}`;
+                            recipeList.appendChild(li);
+                        });
+                        expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                        expandBtn.textContent = expanded ? 'Mostrar menos ↑' : `Mostrar todas (${flower.recipes.length}) ↓`;
+                    };
+                    renderRecipeList();
+
+                    expandBtn.addEventListener('click', () => {
+                        expanded = !expanded;
+                        if (expanded) {
+                            expandedCards.recipes.add(flower.id);
+                        } else {
+                            expandedCards.recipes.delete(flower.id);
+                        }
+                        renderRecipeList();
+                    });
+                    recipeBox.appendChild(expandBtn);
+                }
+                card.appendChild(recipeBox);
+            }
+
+            if (flower.bestTime) {
+                const pathOpen = expandedCards.bestPath.has(flower.id);
+
+                const bestBtn = document.createElement('button');
+                bestBtn.type = 'button';
+                bestBtn.className = 'best-btn';
+                bestBtn.setAttribute('aria-expanded', pathOpen ? 'true' : 'false');
+                bestBtn.setAttribute('aria-controls', `path-${flower.id}`);
+                
+                const btnLabel = document.createElement('span');
+                btnLabel.textContent = `Melhor rota (${flower.bestTime})`;
+                
+                const arrow = document.createElement('span');
+                arrow.className = 'arrow-icon';
+                arrow.textContent = '▼';
+
+                bestBtn.appendChild(btnLabel);
+                bestBtn.appendChild(arrow);
+
+                const bestPathBox = document.createElement('div');
+                bestPathBox.id = `path-${flower.id}`;
+                bestPathBox.className = 'best-path';
+                if (pathOpen) bestPathBox.classList.add('open');
+
+                const steps = flower.bestSteps.length > 0 ? flower.bestSteps : [`Tempo estimado: ${flower.bestTime}`];
+                steps.forEach((step, idx) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'path-step';
+                    stepDiv.textContent = step;
+                    bestPathBox.appendChild(stepDiv);
+
+                    if (idx < steps.length - 1) {
+                        const arrowDiv = document.createElement('div');
+                        arrowDiv.className = 'path-arrow';
+                        arrowDiv.textContent = '↓';
+                        bestPathBox.appendChild(arrowDiv);
+                    }
+                });
+
+                bestBtn.addEventListener('click', () => {
+                    const isOpen = bestPathBox.classList.toggle('open');
+                    if (isOpen) {
+                        expandedCards.bestPath.add(flower.id);
+                    } else {
+                        expandedCards.bestPath.delete(flower.id);
+                    }
+                    bestBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+
+                card.appendChild(bestBtn);
+                card.appendChild(bestPathBox);
+            }
+
+            return card;
+        }
+
+        /* =========================================
+           11. MÓDULOS DE RENDERIZAÇÃO ESPECÍFICOS
+           ========================================= */
+        function getFilteredFlowers() {
+            const { seed, type, search, sort } = appState.filters;
+            
+            let filtered = flowerDatabase.filter(flower => {
+                const matchSeed = !seed || flower.seed === seed;
+                const matchType = !type || flower.type === type;
+                const matchSearch = !search || flower.searchText.includes(search);
+                return matchSeed && matchType && matchSearch;
+            });
+
+            if (sort === 'name-asc') {
+                filtered.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            } else if (sort === 'name-desc') {
+                filtered.sort((a, b) => b.name.localeCompare(a.name, 'pt-BR'));
+            } else if (sort === 'recipes-desc') {
+                filtered.sort((a, b) => b.recipes.length - a.recipes.length);
+            }
+
+            return filtered;
+        }
+
+        function renderGlobalProgress() {
+            const total = flowerDatabase.length;
+            const collected = flowerDatabase.filter(f => !!appState.inventory[f.id]).length;
+            const pct = total === 0 ? 0 : Math.round((collected / total) * 100);
+
+            document.getElementById('progressFill').style.width = `${pct}%`;
+            document.getElementById('globalProgressLabel').textContent = `${collected}/${total} (${pct}%)`;
+            document.getElementById('globalRemainingLabel').textContent = 
+                collected === total ? 'Toda a coleção concluída! 🎉' : `${total - collected} restantes`;
+        }
+
+        function renderFilteredProgress(filteredCount, filteredCollectedCount) {
+            const isFilterActive = !!(appState.filters.seed || appState.filters.type || appState.filters.search);
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            const filterSubtext = document.getElementById('filterProgressSubtext');
+
+            if (isFilterActive && filteredCount > 0) {
+                clearBtn.classList.remove('hidden');
+                filterSubtext.classList.remove('hidden');
+                filterSubtext.textContent = `Filtro ativo: ${filteredCollectedCount}/${filteredCount} cultivadas`;
+            } else {
+                if (isFilterActive) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+                filterSubtext.classList.add('hidden');
+            }
+        }
+
+        function renderEmptyState(filteredCount) {
+            const emptyState = document.getElementById('emptyState');
+            const emptyMsg = document.getElementById('emptyStateMessage');
+
+            if (filteredCount === 0) {
+                emptyState.classList.remove('hidden');
+                // Sem resultados, nenhuma das duas seções pode continuar visível com rótulo.
+                document.getElementById('missingSection').classList.add('hidden');
+                document.getElementById('collectedSection').classList.add('hidden');
+
+                const reasons = [];
+                if (appState.filters.seed) reasons.push(`Semente "${appState.filters.seed.split(' (')[0]}"`);
+                if (appState.filters.type) reasons.push(`Tipo "${appState.filters.type}"`);
+                if (appState.filters.search) reasons.push(`Busca "${appState.filters.search}"`);
+
+                emptyMsg.textContent = reasons.length > 0
+                    ? `Nenhum resultado para: ${reasons.join(' + ')}.`
+                    : 'Nenhuma flor encontrada.';
+                return true;
+            }
+
+            emptyState.classList.add('hidden');
+            return false;
+        }
+
+        function renderFlowerGrid(filtered) {
+            const missingGrid = document.getElementById('missingGrid');
+            const collectedGrid = document.getElementById('collectedGrid');
+
+            missingGrid.innerHTML = '';
+            collectedGrid.innerHTML = '';
+
+            const missingFrag = document.createDocumentFragment();
+            const collectedFrag = document.createDocumentFragment();
+
+            let collectedCards = 0;
+
+            filtered.forEach(flower => {
+                const isCollected = !!appState.inventory[flower.id];
+                const card = createFlowerCard(flower, isCollected);
+                if (isCollected) {
+                    collectedFrag.appendChild(card);
+                    collectedCards++;
+                } else {
+                    missingFrag.appendChild(card);
+                }
+            });
+
+            missingGrid.appendChild(missingFrag);
+            collectedGrid.appendChild(collectedFrag);
+
+            // Esconde a seção vazia e recalcula os dois rótulos de uma só vez.
+            syncSections();
+
+            return collectedCards;
+        }
+
+        // Função de Orquestração Principal
+        function renderView() {
+            renderGlobalProgress();
+            
+            const filtered = getFilteredFlowers();
+            const isEmpty = renderEmptyState(filtered.length);
+
+            if (isEmpty) {
+                renderFilteredProgress(0, 0);
+                document.getElementById('missingGrid').innerHTML = '';
+                document.getElementById('collectedGrid').innerHTML = '';
+                return;
+            }
+
+            const collectedCount = renderFlowerGrid(filtered);
+            renderFilteredProgress(filtered.length, collectedCount);
+        }
+
+        /* =========================================
+           12. HANDLERS DE INTERAÇÃO & DEBOUNCE
+           ========================================= */
+        function setupChipGroup(containerId, stateKey) {
+            const container = document.getElementById(containerId);
+            container.addEventListener('click', (e) => {
+                const chip = e.target.closest('.chip');
+                if (!chip) return;
+
+                container.querySelectorAll('.chip').forEach(c => {
+                    c.classList.remove('active');
+                    c.setAttribute('aria-pressed', 'false');
+                });
+
+                chip.classList.add('active');
+                chip.setAttribute('aria-pressed', 'true');
+                appState.filters[stateKey] = chip.dataset.val || '';
+                renderView();
+            });
+        }
+
+        setupChipGroup('seedChips', 'seed');
+        setupChipGroup('typeChips', 'type');
+
+        // Busca com Debounce (120ms)
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(appState.searchTimer);
+            appState.searchTimer = setTimeout(() => {
+                appState.filters.search = e.target.value.toLowerCase().trim();
+                renderView();
+            }, 120);
+        });
+
+        // Ordenação
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            appState.filters.sort = e.target.value;
+            renderView();
+        });
+
+        // Limpar filtros
+        function resetFilters() {
+            // Cancela o debounce pendente da busca: sem isso, o temporizador disparava
+            // DEPOIS da limpeza, reativava o filtro de busca e voltava a filtrar a grade.
+            clearTimeout(appState.searchTimer);
+            appState.searchTimer = null;
+
+            appState.filters.seed = '';
+            appState.filters.type = '';
+            appState.filters.search = '';
+            appState.filters.sort = 'default';
+
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sortSelect').value = 'default';
+
+            document.querySelectorAll('.chip-row').forEach(row => {
+                row.querySelectorAll('.chip').forEach((c, idx) => {
+                    const isFirst = idx === 0;
+                    c.classList.toggle('active', isFirst);
+                    c.setAttribute('aria-pressed', isFirst ? 'true' : 'false');
+                });
+            });
+
+            renderView();
+        }
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', resetFilters);
+        document.getElementById('emptyClearBtn').addEventListener('click', resetFilters);
+
+        // Reset da Coleção Inteira
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('Tem certeza de que deseja resetar todo o progresso de flores cultivadas?')) {
+                appState.history = [];
+                // replace:true impõe {} exato: flores que outra aba adicionou
+                // após a leitura local também são removidas, em vez de
+                // sobreviverem via merge de delta.
+                const result = setInventoryState({}, { replace: true });
+                const persisted = !!(result && result.ok);
+                // Só anuncia sucesso quando o navegador confirmou a gravação.
+                showToast(
+                    persisted
+                        ? 'Progresso reiniciado com sucesso.'
+                        : 'Progresso reiniciado apenas nesta sessão — não foi possível salvar.',
+                    null
+                );
+                renderView();
+            }
+        });
+
+        // Tema Dark/Light — nenhuma falha de armazenamento pode abortar a inicialização.
+        const themeToggle = document.getElementById('themeToggle');
+
+        function readThemePreference() {
+            try {
+                const saved = localStorage.getItem(THEME_KEY);
+                return saved === 'light' || saved === 'dark' ? saved : null;
+            } catch (err) {
+                console.warn("Tema não pôde ser lido do localStorage:", err);
+                return null;
+            }
+        }
+
+        function persistThemePreference(theme) {
+            try {
+                localStorage.setItem(THEME_KEY, theme);
+                return true;
+            } catch (err) {
+                console.warn("Tema não pôde ser salvo no localStorage:", err);
+                return false;
+            }
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            themeToggle.setAttribute(
+                'aria-label',
+                theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'
+            );
+        }
+
+        // Sem preferência salva, o tema vem do sistema operacional (prefers-color-scheme)
+        // em vez de forçar dark para quem nunca tocou no botão.
+        function getSystemTheme() {
+            return (typeof window.matchMedia === 'function'
+                && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+        }
+
+        function initTheme() {
+            // A preferência detectada NÃO é gravada: enquanto o usuário não escolher
+            // explicitamente, o app continua acompanhando o sistema.
+            applyTheme(readThemePreference() || getSystemTheme());
+        }
+
+        // O tema do sistema pode mudar com o app já aberto (agendamento automático do SO).
+        if (typeof window.matchMedia === 'function') {
+            const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+            const onSystemThemeChange = () => {
+                if (readThemePreference()) return; // escolha explícita do usuário prevalece
+                applyTheme(systemThemeQuery.matches ? 'light' : 'dark');
+            };
+
+            if (typeof systemThemeQuery.addEventListener === 'function') {
+                systemThemeQuery.addEventListener('change', onSystemThemeChange);
+            } else if (typeof systemThemeQuery.addListener === 'function') {
+                systemThemeQuery.addListener(onSystemThemeChange); // navegadores antigos
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            persistThemePreference(next);
+        });
+
+        /* =========================================
+           13. SINCRONIZAÇÃO ENTRE ABAS
+           ========================================= */
+        // Guarda o foco atual (card + controle interno) para devolvê-lo depois de uma
+        // reconstrução completa da grade, que recria todos os nós.
+        function captureCardFocus() {
+            const active = document.activeElement;
+            if (!active || typeof active.closest !== 'function') return null;
+
+            const card = active.closest('.flower-card');
+            if (!card) return null;
+
+            const control = ['checkbox-btn', 'expand-btn', 'best-btn']
+                .find(cls => active.classList.contains(cls)) || null;
+
+            return { id: card.dataset.id, control };
+        }
+
+        function restoreCardFocus(snapshot) {
+            if (!snapshot) return;
+
+            const card = document.querySelector(`.flower-card[data-id="${CSS.escape(snapshot.id)}"]`);
+            if (!card) return;
+
+            const target = (snapshot.control && card.querySelector(`.${snapshot.control}`))
+                || card.querySelector('.checkbox-btn');
+            if (target) target.focus();
+        }
+
+        // Uma alteração feita em outra aba precisa refletir nos cards e nos contadores
+        // sem exigir interação local ou recarga.
+        window.addEventListener('storage', (event) => {
+            // event.key === null indica localStorage.clear() em outra aba.
+            if (event.key !== null && event.key !== STORAGE_KEY && event.key !== LEGACY_STORAGE_KEY) return;
+
+            // Alterações locais que não puderam ser salvas prevalecem nesta aba; o aviso
+            // persistente no topo já informa que elas serão perdidas ao recarregar.
+            if (storageState.dirty) return;
+
+            const snapshot = readCurrentSnapshot();
+            // Evento repetido ou fora de ordem: nada novo a aplicar.
+            if (snapshot && snapshot.rev !== null && snapshot.rev === storageState.lastRev) return;
+            if (snapshot) storageState.lastRev = snapshot.rev;
+
+            const incoming = loadInventoryFromStorage({ rewrite: false });
+            // rev mudou mas o conteúdo final é idêntico: as operações da outra aba
+            // se anularam (ex.: marcou e desmarcou). As direções registradas no
+            // histórico local continuam válidas, então ele é preservado de propósito
+            // — limpar aqui destruiria undos sem nenhum ganho. (lastRev já foi
+            // atualizado acima, então eventos repetidos seguem ignorados.)
+            if (JSON.stringify(incoming) === JSON.stringify(appState.inventory)) return;
+
+            appState.inventory = incoming;
+            // O histórico local descreve uma sequência de estados que não é mais a atual.
+            appState.history = [];
+            dismissToast();
+
+            const focusSnapshot = captureCardFocus();
+            renderView();
+            restoreCardFocus(focusSnapshot);
+        });
+
+        // Alterações que nunca chegaram ao disco merecem uma última chance antes de
+        // sair: tenta persistir de forma síncrona (localStorage permite) e, só se
+        // ainda restar pendência, exibe o diálogo de confirmação.
+        // beforeunload não é confiável no Safari iOS (muitas vezes nem dispara);
+        // pagehide + visibilitychange cobrem o fechamento/background mobile.
+        function tryFlushPendingSaves() {
+            if (!storageState.dirty) return;
+            // Commit best-effort com delta identidade: o rebase interno reaplica os
+            // tombstones pendentes sobre o snapshot mais recente e tenta gravar.
+            // Sem renderização aqui — só persistência. Falha silenciosa cai no diálogo.
+            try {
+                commitInventoryChange((base) => base, { silent: true });
+            } catch (err) {
+                console.warn('Tentativa final de salvamento falhou:', err);
+            }
+        }
+
+        window.addEventListener('beforeunload', (event) => {
+            if (!storageState.dirty) return;
+            tryFlushPendingSaves();
+            if (!storageState.dirty) return;
+            event.preventDefault();
+            event.returnValue = '';
+        });
+
+        // iOS Safari: pagehide é o sinal confiável de saída; visibilitychange cobre
+        // o app indo para background sem descarregar. Ambos são síncronos e sem
+        // diálogo — apenas best-effort para não perder marcações.
+        window.addEventListener('pagehide', () => {
+            tryFlushPendingSaves();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') tryFlushPendingSaves();
+        });
+
+        // Inicialização
+        initTheme();
+        renderView();
+    </script>
+</body>
+</html>
