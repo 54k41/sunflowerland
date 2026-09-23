@@ -103,6 +103,18 @@
             align-items: center;
         }
 
+        .back-link {
+            display: inline-block;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+
         h1 {
             font-size: 1.35rem;
             font-weight: 600;
@@ -541,7 +553,10 @@
 
     <div class="container">
         <header>
-            <h1>Fishing Guide</h1>
+            <div>
+                <a class="back-link" href="../">← All guides</a>
+                <h1>Fishing Guide</h1>
+            </div>
             <button id="themeToggle" class="theme-btn" aria-label="Toggle theme">☀️</button>
         </header>
 
