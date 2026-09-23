@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guia de Flores & Cruzamento</title>
+    <title>Flower Guide & Crossbreeding</title>
     <script>
-        // Aplica o tema antes da primeira pintura: sem preferência salva, segue o
-        // prefers-color-scheme do sistema. Evita o flash de tema escuro em SO claro.
+        // Applies the theme before first paint: with no saved preference, follows the
+        // system's prefers-color-scheme. Avoids the dark-theme flash on a light-mode OS.
         (function () {
             try {
                 var saved = localStorage.getItem('flowerGuideTheme');
@@ -17,13 +17,13 @@
                     (saved === 'light' || saved === 'dark') ? saved : (prefersLight ? 'light' : 'dark')
                 );
             } catch (err) {
-                /* Sem acesso ao localStorage: mantém o tema declarado no <html>. */
+                /* No access to localStorage: keeps the theme declared on <html>. */
             }
         })();
     </script>
     <style>
         /* =========================================
-           1. VARIÁVEIS E TEMAS (Design Tokens)
+           1. VARIABLES & THEMES (Design Tokens)
            ========================================= */
         :root {
             color-scheme: dark;
@@ -62,8 +62,8 @@
             --border: #e2e8f0;
             --border-focus: #2563eb;
             --text-primary: #0f172a;
-            /* Contraste sobre #ffffff: secondary 7.6:1 e muted 4.8:1 — ambos passam em
-               WCAG AA (4.5:1) para texto pequeno. O valor anterior (#94a3b8) ficava em ~2.6:1. */
+            /* Contrast over #ffffff: secondary 7.6:1 and muted 4.8:1 — both pass
+               WCAG AA (4.5:1) for small text. The previous value (#94a3b8) sat at ~2.6:1. */
             --text-secondary: #475569;
             --text-muted: #64748b;
             --best-bg: #fef9c3;
@@ -75,7 +75,7 @@
         }
 
         /* =========================================
-           2. BASE & ACESSIBILIDADE
+           2. BASE & ACCESSIBILITY
            ========================================= */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -130,7 +130,7 @@
             visibility: visible;
         }
 
-        /* Aviso persistente: a tela foi atualizada, mas nada foi gravado no navegador. */
+        /* Persistent warning: the view was updated, but nothing was written to the browser. */
         .save-warning {
             display: flex;
             align-items: flex-start;
@@ -171,7 +171,7 @@
         }
 
         /* =========================================
-           3. FILTROS, BUSCA & ORDENAÇÃO
+           3. FILTERS, SEARCH & SORTING
            ========================================= */
         .controls-card {
             background: var(--bg-surface);
@@ -279,7 +279,7 @@
         }
 
         /* =========================================
-           4. PROGRESSO GLOBAL & FILTRADO
+           4. GLOBAL & FILTERED PROGRESS
            ========================================= */
         .progress-card {
             background: var(--bg-surface);
@@ -320,7 +320,7 @@
         }
 
         /* =========================================
-           5. CARDS DE FLORES
+           5. FLOWER CARDS
            ========================================= */
         .flower-grid {
             display: grid;
@@ -398,10 +398,10 @@
             border-color: var(--accent);
         }
 
-        /* O ícone vive sempre no DOM, mas só é renderizado quando o estado é "marcado".
-           Usar display:none (em vez de color:transparent) impede que leitores de tela e o
-           modo de alto contraste do Windows (forced-colors) forcem a cor e exponham um
-           "✓" falso em botões desmarcados. */
+        /* The icon always lives in the DOM, but it is only rendered when the state is
+           "checked". Using display:none (instead of color:transparent) prevents screen
+           readers and Windows high-contrast mode (forced-colors) from forcing the color
+           and exposing a fake "✓" on unchecked buttons. */
         .check-icon {
             display: none;
             line-height: 1;
@@ -425,9 +425,9 @@
             }
         }
 
-        /* Cards coletados mantêm contraste AA: em vez de reduzir a opacidade do
-           card inteiro (que derrubava o texto para ~2.5:1), usa borda tracejada
-           e texto secundário — visualmente distinto, mas legível. */
+        /* Collected cards keep AA contrast: instead of reducing the opacity of the
+           whole card (which dropped text to ~2.5:1), a dashed border and secondary
+           text are used — visually distinct, but readable. */
         .flower-card.collected {
             border-style: dashed;
             background: var(--bg-surface);
@@ -565,7 +565,7 @@
         }
 
         /* =========================================
-           6. TOAST & FEEDBACK COM DESFAZER
+           6. TOAST & UNDO FEEDBACK
            ========================================= */
         .toast {
             position: fixed;
@@ -587,8 +587,8 @@
             visibility: hidden;
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease, visibility 0.25s ease;
             pointer-events: none;
-            /* Nunca ultrapassa a viewport: mensagens longas + botão de desfazer
-               quebravam o layout em telas de 360px (iPhone SE) com scroll horizontal. */
+            /* Never exceeds the viewport: long messages + the undo button
+               broke the layout on 360px screens (iPhone SE) with horizontal scroll. */
             width: max-content;
             max-width: min(560px, calc(100vw - 32px));
             flex-wrap: wrap;
@@ -633,27 +633,27 @@
     <div class="container">
         <header>
             <div>
-                <h1>Guia de Flores</h1>
+                <h1>Flower Guide</h1>
             </div>
             <div class="header-actions">
-                <span id="saveIndicator" class="save-indicator" aria-live="polite">☁ Salvo</span>
-                <button type="button" id="resetBtn" class="icon-btn" title="Resetar progresso da coleção" aria-label="Resetar progresso da coleção">↺</button>
-                <button type="button" id="themeToggle" class="icon-btn" aria-label="Alternar tema">☀️</button>
+                <span id="saveIndicator" class="save-indicator" aria-live="polite">☁ Saved</span>
+                <button type="button" id="resetBtn" class="icon-btn" title="Reset collection progress" aria-label="Reset collection progress">↺</button>
+                <button type="button" id="themeToggle" class="icon-btn" aria-label="Toggle theme">☀️</button>
             </div>
         </header>
 
         <div id="saveWarning" class="save-warning hidden" role="alert" aria-live="assertive" data-kind="">
             <span class="save-warning-icon" aria-hidden="true">⚠</span>
-            <span data-warning-text>Persistência indisponível — o navegador bloqueou o armazenamento local. Nada do que você marcar será salvo.</span>
+            <span data-warning-text>Persistence unavailable — the browser blocked local storage. Nothing you check will be saved.</span>
         </div>
 
-        <section class="controls-card" role="search" aria-label="Painel de filtros e busca">
-            <input type="search" id="searchInput" class="search-bar" placeholder="Buscar por flor, semente, ingrediente ou família..." aria-label="Campo de busca" />
+        <section class="controls-card" role="search" aria-label="Filter and search panel">
+            <input type="search" id="searchInput" class="search-bar" placeholder="Search by flower, seed, ingredient or family..." aria-label="Search field" />
 
             <div class="filter-group">
-                <span class="filter-label" id="seedFilterLabel">Semente Base</span>
+                <span class="filter-label" id="seedFilterLabel">Base Seed</span>
                 <div class="chip-row" id="seedChips" role="group" aria-labelledby="seedFilterLabel">
-                    <button type="button" class="chip active" data-val="" aria-pressed="true">Todas</button>
+                    <button type="button" class="chip active" data-val="" aria-pressed="true">All</button>
                     <button type="button" class="chip" data-val="Sunpetal Seed (1 Day)" aria-pressed="false">Sunpetal (1d)</button>
                     <button type="button" class="chip" data-val="Bloom Seed (2 Days)" aria-pressed="false">Bloom (2d)</button>
                     <button type="button" class="chip" data-val="Lily Seed (5 Days)" aria-pressed="false">Lily (5d)</button>
@@ -661,37 +661,37 @@
             </div>
 
             <div class="filter-group">
-                <span class="filter-label" id="typeFilterLabel">Família / Espécie</span>
+                <span class="filter-label" id="typeFilterLabel">Family / Species</span>
                 <div class="chip-row" id="typeChips" role="group" aria-labelledby="typeFilterLabel">
-                    <button type="button" class="chip active" data-val="" aria-pressed="true">Todas</button>
+                    <button type="button" class="chip active" data-val="" aria-pressed="true">All</button>
                     <button type="button" class="chip" data-val="Pansy" aria-pressed="false">Pansy</button>
                     <button type="button" class="chip" data-val="Cosmos" aria-pressed="false">Cosmos</button>
                     <button type="button" class="chip" data-val="Balloon Flower" aria-pressed="false">Balloon</button>
                     <button type="button" class="chip" data-val="Daffodil" aria-pressed="false">Daffodil</button>
                     <button type="button" class="chip" data-val="Carnation" aria-pressed="false">Carnation</button>
                     <button type="button" class="chip" data-val="Lotus" aria-pressed="false">Lotus</button>
-                    <button type="button" class="chip" data-val="Special" aria-pressed="false">Especial</button>
+                    <button type="button" class="chip" data-val="Special" aria-pressed="false">Special</button>
                 </div>
             </div>
 
             <div class="toolbar-row">
                 <label style="display:flex; align-items:center; gap: 6px; font-size:0.75rem; color:var(--text-secondary);">
-                    Ordenar:
-                    <select id="sortSelect" class="sort-select" aria-label="Ordenar flores por">
-                        <option value="default">Padrão da base</option>
-                        <option value="name-asc">Nome (A - Z)</option>
-                        <option value="name-desc">Nome (Z - A)</option>
-                        <option value="recipes-desc">Mais cruzamentos</option>
+                    Sort:
+                    <select id="sortSelect" class="sort-select" aria-label="Sort flowers by">
+                        <option value="default">Database order</option>
+                        <option value="name-asc">Name (A - Z)</option>
+                        <option value="name-desc">Name (Z - A)</option>
+                        <option value="recipes-desc">Most crossbreeds</option>
                     </select>
                 </label>
 
-                <button type="button" id="clearFiltersBtn" class="btn-clear hidden">× Limpar filtros</button>
+                <button type="button" id="clearFiltersBtn" class="btn-clear hidden">× Clear filters</button>
             </div>
         </section>
 
-        <section class="progress-card" aria-label="Progresso da coleção">
+        <section class="progress-card" aria-label="Collection progress">
             <div class="progress-header">
-                <span>Progresso Geral: <strong id="globalProgressLabel">Carregando...</strong></span>
+                <span>Overall Progress: <strong id="globalProgressLabel">Loading...</strong></span>
                 <span id="globalRemainingLabel" class="progress-subtext"></span>
             </div>
             <div class="progress-bar">
@@ -702,18 +702,18 @@
 
         <main id="flowerListContainer">
             <div id="missingSection">
-                <div class="section-label" id="missingLabel">Pendentes</div>
+                <div class="section-label" id="missingLabel">Pending</div>
                 <div id="missingGrid" class="flower-grid"></div>
             </div>
 
             <div id="collectedSection" class="hidden">
-                <div class="section-label" id="collectedLabel">Cultivadas</div>
+                <div class="section-label" id="collectedLabel">Grown</div>
                 <div id="collectedGrid" class="flower-grid"></div>
             </div>
 
             <div id="emptyState" class="empty-message hidden">
-                <p id="emptyStateMessage">Nenhuma flor encontrada para os filtros aplicados.</p>
-                <button type="button" id="emptyClearBtn" class="btn-clear">Limpar filtros e busca</button>
+                <p id="emptyStateMessage">No flowers found for the applied filters.</p>
+                <button type="button" id="emptyClearBtn" class="btn-clear">Clear filters and search</button>
             </div>
         </main>
     </div>
@@ -721,12 +721,12 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast" role="status" aria-live="polite">
         <span id="toastText" class="toast-text"></span>
-        <button type="button" id="toastUndoBtn" class="toast-undo-btn hidden">Desfazer última alteração</button>
+        <button type="button" id="toastUndoBtn" class="toast-undo-btn hidden">Undo last change</button>
     </div>
 
     <script>
         /* =========================================
-           7. DATABASE & VALIDAÇÃO COM BUSCA PRÉ-COMPUTADA
+           7. DATABASE & VALIDATION WITH PRECOMPUTED SEARCH
            ========================================= */
         const rawFlowerDatabase = [
             {
@@ -1037,24 +1037,24 @@
                 const safeId = String(item.id || `flower_${index}`).trim();
 
                 if (seenIds.has(safeId)) {
-                    console.error(`ID duplicado detectado: "${safeId}". Ignorado.`);
+                    console.error(`Duplicate ID detected: "${safeId}". Ignored.`);
                     return;
                 }
                 seenIds.add(safeId);
 
-                const name = String(item.name || 'Sem nome');
-                const type = String(item.type || 'Geral');
-                const seed = String(item.seed || 'Desconhecida');
+                const name = String(item.name || 'Unnamed');
+                const type = String(item.type || 'General');
+                const seed = String(item.seed || 'Unknown');
                 const bestTime = item.bestTime ? String(item.bestTime) : null;
                 const bestSteps = Array.isArray(item.bestSteps) ? item.bestSteps.map(String) : [];
                 const recipes = Array.isArray(item.recipes) ? item.recipes.map(String) : [];
 
-                // Alias PT-BR para busca: o tipo interno "Special" é exibido como
-                // "Especial" no chip; sem o alias, buscar "especial" não achava nada.
-                // A base tem 33 flores, 11 sem bestTime (dado sem rota otimizada —
-                // comportamento esperado: o card apenas omite o botão "Melhor rota").
+                // PT-BR aliases for search: the internal type "Special" used to be shown as
+                // "Especial" in the chip; without the alias, searching "especial" found nothing.
+                // The database has 33 flowers, 11 without bestTime (no optimized route data —
+                // expected behavior: the card simply omits the "Best route" button).
                 const typeAliases = type === 'Special' ? 'especial especiais' : '';
-                // Pré-calcula string de busca em minúsculo
+                // Precomputes the lowercase search string
                 const searchText = `${name} ${seed} ${type} ${typeAliases} ${recipes.join(' ')} ${bestSteps.join(' ')}`.toLowerCase();
 
                 cleanList.push({
@@ -1075,7 +1075,7 @@
         const flowerDatabase = validateAndNormalizeDatabase(rawFlowerDatabase);
 
         /* =========================================
-           8. STORAGE & APP STATE EM MEMÓRIA
+           8. STORAGE & IN-MEMORY APP STATE
            ========================================= */
         const STORAGE_KEY = 'flowerGuideInventory_v3';
         const LEGACY_STORAGE_KEY = 'flowerGuideInventory_v2';
@@ -1090,9 +1090,9 @@
             const normalized = {};
 
             Object.entries(raw).forEach(([id, value]) => {
-                // Aceita apenas valores que representam "coletado". Writes atuais gravam
-                // sempre `true`, mas dados legados/futuros podem trazer 1 ou "true".
-                // Qualquer outro formato (0, "false", objetos...) é descartado.
+                // Only accepts values that represent "collected". Current writes always
+                // store `true`, but legacy/future data may carry 1 or "true".
+                // Any other format (0, "false", objects...) is discarded.
                 if (validIds.has(id) && (value === true || value === 1 || value === 'true')) {
                     normalized[id] = true;
                 }
@@ -1101,18 +1101,18 @@
             return normalized;
         }
 
-        // Remove a chave legada (v2) sem nunca quebrar o boot: armazenamento pode
-        // estar bloqueado (ex.: modo privado) e lançar exceção.
+        // Removes the legacy (v2) key without ever breaking boot: storage may be
+        // blocked (e.g. private mode) and throw an exception.
         function clearLegacyStorage() {
             try {
                 localStorage.removeItem(LEGACY_STORAGE_KEY);
             } catch (err) {
-                console.warn('Não foi possível remover a chave legada do armazenamento:', err);
+                console.warn('Could not remove the legacy storage key:', err);
             }
         }
 
-        // Lê e interpreta UMA versão do inventário de forma isolada.
-        // Uma falha aqui (armazenamento bloqueado ou JSON inválido) não impede tentar as outras versões.
+        // Reads and interprets ONE inventory version in isolation.
+        // A failure here (blocked storage or invalid JSON) does not prevent trying the other versions.
         function readInventoryVersion(key, { unwrapCollected }) {
             let raw = null;
             try {
@@ -1127,17 +1127,17 @@
             try {
                 parsed = JSON.parse(raw);
             } catch (err) {
-                console.error(`JSON inválido em "${key}". Versão ignorada, seguindo para a anterior:`, err);
+                console.error(`Invalid JSON in "${key}". Version ignored, moving on to the previous one:`, err);
                 return { status: 'corrupt' };
             }
 
-            // O payload v3 grava `version: 3`. Se a chave atual trouxer outra versão
-            // (ex.: v4 futura), NÃO interpreta como v3 e NÃO trata como corrupção
-            // comum: retorna 'unsupported' para que o chamador nunca faça fallback
-            // para a v2 nem regrave por cima de um formato mais novo.
+            // The v3 payload stores `version: 3`. If the current key carries another version
+            // (e.g. a future v4), do NOT interpret it as v3 and do NOT treat it as ordinary
+            // corruption: return 'unsupported' so the caller never falls back to v2 or
+            // rewrites over a newer format.
             if (key === STORAGE_KEY && isPlainObject(parsed)
                 && 'version' in parsed && parsed.version !== 3) {
-                console.warn(`Versão não suportada em "${key}" (version=${parsed.version}). Leitura recusada para não destruir o formato.`);
+                console.warn(`Unsupported version in "${key}" (version=${parsed.version}). Read refused to avoid destroying the format.`);
                 return { status: 'unsupported', version: parsed.version };
             }
 
@@ -1145,7 +1145,7 @@
             if (unwrapCollected) {
                 candidate = isPlainObject(parsed) && isPlainObject(parsed.collected) ? parsed.collected : null;
             } else {
-                // Formato antigo: pode ser { collected: {...} } ou o mapa direto.
+                // Old format: may be { collected: {...} } or the direct map.
                 candidate = isPlainObject(parsed) && isPlainObject(parsed.collected) ? parsed.collected : parsed;
             }
 
@@ -1160,31 +1160,31 @@
             };
         }
 
-        // Versão corrente persistida + carimbo (rev) usado no controle de concorrência.
+        // Current persisted version + stamp (rev) used for concurrency control.
         function readCurrentSnapshot() {
             const result = readInventoryVersion(STORAGE_KEY, { unwrapCollected: true });
             if (result.status === 'ok') return { inventory: result.inventory, rev: result.rev };
             if (result.status === 'empty') return { inventory: {}, rev: null };
-            if (result.status === 'unsupported') return null; // formato futuro: existe, mas não serve como base
-            return null; // corrompido ou bloqueado: não serve como base
+            if (result.status === 'unsupported') return null; // future format: exists, but cannot serve as a base
+            return null; // corrupted or blocked: cannot serve as a base
         }
 
-        // `rewrite: false` é usado ao sincronizar com outra aba: um listener de
-        // storage não deve gravar, sob risco de eco entre abas.
+        // `rewrite: false` is used when syncing with another tab: a storage listener
+        // must not write, or echoes would bounce between tabs.
         function loadInventoryFromStorage({ rewrite = true } = {}) {
-            // Revalida um flag 'unsupported' obsoleto: se a chave atual já não
-            // contém formato futuro, a sessão volta a permitir gravação. Sem isso,
-            // uma v3 válida posterior nunca reativava os saves.
+            // Revalidates a stale 'unsupported' flag: if the current key no longer
+            // contains a future format, the session allows writes again. Without this,
+            // a later valid v3 never re-enabled saves.
             if (storageState.unsupported && !storedVersionIsUnsupported()) {
                 storageState.unsupported = false;
                 if (storageState.warningKind === 'unsupported') setStorageWarning(null);
             }
-            // Versão atual primeiro...
+            // Current version first...
             const current = readInventoryVersion(STORAGE_KEY, { unwrapCollected: true });
 
-            // Formato futuro (ex.: version 4): nunca faz fallback para a v2 e nunca
-            // regrava. Qualquer uma dessas ações destruiria dados de uma versão mais
-            // nova do app. A sessão segue com coleção vazia em memória e avisada.
+            // Future format (e.g. version 4): never falls back to v2 and never
+            // rewrites. Either action would destroy data from a newer version of
+            // the app. The session continues with an empty in-memory collection, with a warning.
             if (current.status === 'unsupported') {
                 storageState.unsupported = true;
                 if (storageState.available !== false) setStorageWarning('unsupported');
@@ -1192,61 +1192,61 @@
             }
 
             if (current.status === 'ok') {
-                // Uma v3 válida observada reativa a sessão: limpa um flag
-                // 'unsupported' obsoleto (ex.: outra aba removeu o formato futuro
-                // ou a chave foi regravada). Sem isso, a recusa ficava grudada
-                // para sempre e nenhum save posterior voltava a funcionar.
+                // A valid v3 observed re-enables the session: clears a stale
+                // 'unsupported' flag (e.g. another tab removed the future format
+                // or the key was rewritten). Without this, the refusal stuck
+                // forever and no later save would work again.
                 if (storageState.unsupported) storageState.unsupported = false;
                 storageState.lastRev = current.rev;
-                // Corrige dados antigos/sujos sem exibir feedback visual durante a carga.
-                // A v2 legada só é removida se a v3 já estava íntegra ou se o rewrite
-                // de correção confirmou sucesso: sem isso, uma falha de gravação
-                // (ex.: quota) apagaria o backup junto com a tentativa.
+                // Fixes old/dirty data without showing visual feedback during load.
+                // The legacy v2 is only removed if v3 was already intact or the
+                // corrective rewrite confirmed success: otherwise, a write failure
+                // (e.g. quota) would erase the backup along with the attempt.
                 let persisted = true;
                 if (rewrite && current.needsRewrite) {
                     const fix = saveInventoryToStorage(current.inventory, { silent: true });
                     persisted = !!(fix && fix.ok);
                 }
-                // saveInventoryToStorage já limpa a legada no sucesso; este clear
-                // explícito cobre o caso em que nenhum rewrite foi necessário.
+                // saveInventoryToStorage already clears the legacy key on success; this
+                // explicit clear covers the case where no rewrite was needed.
                 if (rewrite && persisted) clearLegacyStorage();
                 return current.inventory;
             }
 
-            // ...e só então a versão antiga, de forma totalmente independente da atual.
+            // ...and only then the old version, fully independent of the current one.
             const legacy = readInventoryVersion(LEGACY_STORAGE_KEY, { unwrapCollected: false });
             if (legacy.status === 'ok') {
-                // Migração v2 -> v3: só apaga o backup DEPOIS de confirmar que a
-                // gravação na v3 funcionou. Se o save falhar, a v2 permanece como
-                // única cópia válida para a próxima tentativa.
-                // (O save com sucesso já limpa a legada internamente; aqui o ponto
-                // é NÃO limpar quando ele falha.)
+                // v2 -> v3 migration: only deletes the backup AFTER confirming the
+                // v3 write worked. If the save fails, v2 remains as the only
+                // valid copy for the next attempt.
+                // (A successful save already clears the legacy key internally; the point
+                // here is to NOT clear it when the save fails.)
                 let migrated = true;
                 if (rewrite) {
                     const r = saveInventoryToStorage(legacy.inventory, { silent: true });
                     migrated = !!(r && r.ok);
                     if (!migrated) {
-                        // Falha de migração: o dado vive só em memória. Sem tombstones,
-                        // o próximo commit com dirty=true rebaseava sobre o snapshot
-                        // vazio e apagava o inventário migrado. Registra a intenção
-                        // para que rebaseWithPending a preserve (dirty já foi ligado
-                        // pelo save que falhou / recusou formato futuro).
+                        // Migration failure: the data lives only in memory. Without tombstones,
+                        // the next commit with dirty=true would rebase over the empty
+                        // snapshot and erase the migrated inventory. Records the intent
+                        // so rebaseWithPending preserves it (dirty was already turned on
+                        // by the save that failed / refused the future format).
                         trackPendingOps(Object.keys(legacy.inventory), []);
                         storageState.dirty = true;
                     }
                 } else {
-                    // Sincronização entre abas (rewrite:false) não persiste: o dado
-                    // migrado ainda não está no disco, então também precisa de
-                    // tombstones + dirty para não ser perdido no próximo commit.
+                    // Cross-tab sync (rewrite:false) does not persist: the migrated
+                    // data is not on disk yet, so it also needs tombstones + dirty
+                    // to avoid being lost on the next commit.
                     trackPendingOps(Object.keys(legacy.inventory), []);
                     storageState.dirty = true;
                 }
-                // Migração normal (v3 vazia + v2 válida) é silenciosa. Mas se a v3
-                // EXISTIA e estava ilegível, a v2 é um snapshot antigo: avisa o
-                // rollback em vez de fingir que nada aconteceu. O aviso é aplicado
-                // DEPOIS do save, pois um save com sucesso limpa avisos. Se a
-                // migração FALHOU, mantém o 'unsaved' que o save já exibiu (mais
-                // preciso: o dado está em memória, não persistido).
+                // Normal migration (empty v3 + valid v2) is silent. But if v3
+                // EXISTED and was unreadable, v2 is an old snapshot: warn about
+                // the rollback instead of pretending nothing happened. The warning is applied
+                // AFTER the save, because a successful save clears warnings. If the
+                // migration FAILED, keep the 'unsaved' the save already showed (more
+                // accurate: the data is in memory, not persisted).
                 if (current.status === 'corrupt' && storageState.available !== false
                     && (!rewrite || migrated)) {
                     setStorageWarning('rollback');
@@ -1254,9 +1254,9 @@
                 return legacy.inventory;
             }
 
-            // Nenhuma versão recuperável e pelo menos uma corrompida: o progresso salvo
-            // foi perdido. O usuário precisa saber disso antes de recomeçar do zero sem
-            // entender por quê. 'blocked' já foi sinalizado durante a leitura e prevalece.
+            // No version recoverable and at least one corrupted: the saved progress
+            // was lost. The user needs to know this before starting over from scratch
+            // without understanding why. 'blocked' was already flagged during the read and takes precedence.
             if (storageState.available !== false
                 && (current.status === 'corrupt' || legacy.status === 'corrupt')) {
                 setStorageWarning('corrupt');
@@ -1264,24 +1264,24 @@
             return {};
         }
 
-        // available: null = ainda não testado | true = gravando | false = bloqueado pelo navegador
-        // dirty: existem alterações locais que não chegaram ao armazenamento.
-        // FONTE ÚNICA de verdade sobre "há alterações não salvas" — não manter uma segunda
-        // flag paralela (elas dessincronizavam após recuperações parciais de gravação).
-        // unsupported: a chave v3 contém um formato mais novo (ex.: version 4) que este
-        // código não sabe interpretar; enquanto ativo, nenhuma gravação pode ocorrer.
-        // pending: operações locais ainda não confirmadas no disco. Um booleano `dirty`
-        // sozinho não distingue "chave ausente porque nunca existiu" de "chave ausente
-        // porque o usuário a excluiu" — o merge por spread `{...remoto, ...local}`
-        // ressuscitava exclusões não salvas. Os tombstones abaixo preservam a intenção.
+        // available: null = not tested yet | true = writing | false = blocked by the browser
+        // dirty: there are local changes that have not reached storage.
+        // SINGLE SOURCE of truth about "there are unsaved changes" — do not keep a second
+        // parallel flag (they desynced after partial write recoveries).
+        // unsupported: the v3 key contains a newer format (e.g. version 4) that this
+        // code cannot interpret; while active, no write may occur.
+        // pending: local operations not yet confirmed on disk. A bare `dirty` boolean
+        // cannot distinguish "key missing because it never existed" from "key missing
+        // because the user deleted it" — the spread merge `{...remote, ...local}`
+        // resurrected unsaved deletions. The tombstones below preserve the intent.
         const storageState = {
             available: null, lastRev: null, warningKind: null, dirty: false,
             unsupported: false,
             pending: { added: {}, removed: {} }
         };
 
-        // Registra a intenção (add/remove) de forma idempotente: marcar e desmarcar a
-        // mesma flor em sequência cancela o par, em vez de acumular contradições.
+        // Records the intent (add/remove) idempotently: checking and unchecking the
+        // same flower in sequence cancels the pair, instead of accumulating contradictions.
         function trackPendingOps(added, removed) {
             const p = storageState.pending;
             (added || []).forEach(id => { p.added[id] = true; delete p.removed[id]; });
@@ -1293,8 +1293,8 @@
             storageState.pending.removed = {};
         }
 
-        // Reaplica a intenção pendente sobre um snapshot remoto: exclusões continuam
-        // sendo exclusões mesmo quando o estado local em memória é `{}`.
+        // Reapplies the pending intent over a remote snapshot: deletions remain
+        // deletions even when the in-memory local state is `{}`.
         function rebaseWithPending(snapshotInventory) {
             const rebased = { ...(snapshotInventory || {}) };
             Object.keys(storageState.pending.removed).forEach(id => { delete rebased[id]; });
@@ -1302,16 +1302,16 @@
             return normalizeInventory(rebased);
         }
 
-        // Dois estados distintos: ambiente sem persistência x alterações pendentes.
+        // Two distinct states: environment without persistence vs. pending changes.
         const WARNING_MESSAGES = {
-            blocked: 'Persistência indisponível — o navegador bloqueou o armazenamento local. Nada do que você marcar será salvo.',
-            unsaved: 'Alterações não salvas — não foi possível gravar agora. Suas marcações serão perdidas ao recarregar a página.',
-            corrupt: 'Os dados salvos estão corrompidos e não puderam ser lidos — a coleção aparece vazia. Ao marcar uma flor, o registro antigo será substituído.',
-            rollback: 'Os dados atuais estavam corrompidos e uma versão antiga foi restaurada — pode estar faltando progresso recente. Verifique a coleção.',
-            unsupported: 'Esta coleção foi salva por uma versão mais nova do app e não pode ser lida aqui — nada será alterado ou sobrescrito. Abra a versão atualizada para continuar.'
+            blocked: 'Persistence unavailable — the browser blocked local storage. Nothing you check will be saved.',
+            unsaved: 'Unsaved changes — could not write right now. Your checks will be lost when the page reloads.',
+            corrupt: 'The saved data is corrupted and could not be read — the collection appears empty. When you check a flower, the old record will be replaced.',
+            rollback: 'The current data was corrupted and an older version was restored — recent progress may be missing. Check your collection.',
+            unsupported: 'This collection was saved by a newer version of the app and cannot be read here — nothing will be changed or overwritten. Open the updated version to continue.'
         };
 
-        // kind: 'blocked' | 'unsaved' | 'corrupt' | 'rollback' | 'unsupported' | null (oculto)
+        // kind: 'blocked' | 'unsaved' | 'corrupt' | 'rollback' | 'unsupported' | null (hidden)
         function setStorageWarning(kind = null) {
             const warning = document.getElementById('saveWarning');
             if (!warning) return;
@@ -1322,7 +1322,7 @@
                 return;
             }
 
-            // kind desconhecido nunca deve resultar em aviso vazio: ignora.
+            // An unknown kind must never result in an empty warning: ignore it.
             if (!WARNING_MESSAGES[kind]) return;
 
             const textEl = warning.querySelector('[data-warning-text]');
@@ -1331,18 +1331,18 @@
             warning.classList.remove('hidden');
         }
 
-        // Falha de leitura na abertura: avisa na hora que a persistência está indisponível,
-        // sem esperar a primeira gravação falhar.
+        // Read failure at startup: warn at the moment persistence becomes unavailable,
+        // without waiting for the first write to fail.
         function markStorageBlocked(err) {
             if (storageState.available === false) return;
             storageState.available = false;
-            console.warn("Armazenamento local indisponível:", err);
+            console.warn("Local storage unavailable:", err);
             setStorageWarning('blocked');
         }
 
         let savePulseTimer = null;
 
-        // Uma falha precisa apagar o "Salvo" pendente: os dois estados nunca podem coexistir.
+        // A failure must erase the pending "Saved" pulse: the two states can never coexist.
         function cancelSavePulse() {
             clearTimeout(savePulseTimer);
             savePulseTimer = null;
@@ -1357,10 +1357,10 @@
             savePulseTimer = setTimeout(() => ind.classList.remove('visible'), 1200);
         }
 
-        // Sonda silenciosa da chave v3: true apenas se houver um `version`
-        // explícito e diferente de 3. Qualquer outro caso (ausente, ilegível,
-        // bloqueado, sem campo version) devolve false — a análise detalhada
-        // pertence a readInventoryVersion; aqui só interessa não destruir futuro.
+        // Silent probe of the v3 key: true only if there is an explicit `version`
+        // different from 3. Any other case (absent, unreadable, blocked, no version
+        // field) returns false — the detailed analysis belongs to readInventoryVersion;
+        // here the only concern is not destroying a future format.
         function storedVersionIsUnsupported() {
             let raw = null;
             try {
@@ -1377,12 +1377,12 @@
             }
         }
 
-        // Mutex síncrono entre abas para tornar o check-then-write atômico.
-        // localStorage não tem CAS: dois saves que leem o mesmo rev e gravam em
-        // sequência fazem o último sobrescrever o primeiro (lost update). O lock
-        // serializa a seção `expectedRev? + setItem` entre abas que usam o mesmo
-        // protocolo. Expira em 2s para não travar se uma aba morrer com o lock.
-        // O listener de 'storage' ignora esta chave (filtra por STORAGE_KEY).
+        // Synchronous mutex across tabs to make check-then-write atomic.
+        // localStorage has no CAS: two saves that read the same rev and write in
+        // sequence make the last one overwrite the first (lost update). The lock
+        // serializes the `expectedRev? + setItem` section between tabs using the same
+        // protocol. Expires in 2s so it never hangs if a tab dies holding the lock.
+        // The 'storage' listener ignores this key (filters by STORAGE_KEY).
         const INVENTORY_LOCK_KEY = 'flowerGuideInventory_v3.lock';
 
         function acquireInventoryLock(timeoutMs = 600) {
@@ -1393,7 +1393,7 @@
                 try {
                     current = localStorage.getItem(INVENTORY_LOCK_KEY);
                 } catch (err) {
-                    return null; // armazenamento bloqueado: segue best-effort
+                    return null; // storage blocked: continue best-effort
                 }
                 if (current) {
                     try {
@@ -1401,11 +1401,11 @@
                         if (parsed && parsed.exp && parsed.exp > Date.now() && parsed.token) {
                             const wait = 5 + Math.random() * 12;
                             const start = Date.now();
-                            while (Date.now() - start < wait) { /* backoff síncrono curto */ }
+                            while (Date.now() - start < wait) { /* short synchronous backoff */ }
                             continue;
                         }
                     } catch (err) {
-                        // lock corrompido: tenta tomar posse abaixo
+                        // corrupted lock: tries to take ownership below
                     }
                 }
                 try {
@@ -1418,7 +1418,7 @@
                 }
                 const wait = 5 + Math.random() * 15;
                 const start = Date.now();
-                while (Date.now() - start < wait) { /* perdeu a corrida, tenta de novo */ }
+                while (Date.now() - start < wait) { /* lost the race, try again */ }
             }
             return null;
         }
@@ -1432,58 +1432,58 @@
                     const parsed = JSON.parse(cur);
                     if (parsed && parsed.token === token) localStorage.removeItem(INVENTORY_LOCK_KEY);
                 } catch (err) {
-                    try { localStorage.removeItem(INVENTORY_LOCK_KEY); } catch (e) { /* ignora */ }
+                    try { localStorage.removeItem(INVENTORY_LOCK_KEY); } catch (e) { /* ignore */ }
                 }
-            } catch (err) { /* ignora */ }
+            } catch (err) { /* ignore */ }
         }
 
-        // Grava e informa o resultado — atualizar a tela nunca conta como persistência.
-        // expectedRev ativa o controle otimista de concorrência entre abas.
+        // Writes and reports the result — updating the screen never counts as persistence.
+        // expectedRev enables optimistic concurrency control across tabs.
         function saveInventoryToStorage(inv, options = {}) {
             const safeInventory = normalizeInventory(inv);
 
-            // Guarda contra formato futuro: se a v3 contém `version` diferente de 3
-            // (gravada por uma versão mais nova do app, talvez em outra aba depois
-            // do boot), recusa a gravação em vez de destruir o formato.
+            // Guard against a future format: if v3 contains a `version` other than 3
+            // (written by a newer app version, maybe in another tab after boot),
+            // refuse the write instead of destroying the format.
             if (storedVersionIsUnsupported()) {
                 storageState.unsupported = true;
-                // Recusa também é dado não persistido: marca dirty para que o
-                // beforeunload/pagehide avise e o próximo commit rebaseie em vez
-                // de perder silenciosamente as marcações.
+                // A refusal is also unpersisted data: mark dirty so the
+                // beforeunload/pagehide warns and the next commit rebases instead
+                // of silently losing the checks.
                 storageState.dirty = true;
                 cancelSavePulse();
                 if (storageState.available !== false) setStorageWarning('unsupported');
                 return { ok: false, conflict: false, unsupported: true };
             }
-            // Flag obsoleta (a chave já voltou a ser v3 válida): reativa os saves.
+            // Stale flag (the key is back to valid v3): re-enables saves.
             if (storageState.unsupported) {
                 storageState.unsupported = false;
                 if (storageState.warningKind === 'unsupported') setStorageWarning(null);
             }
 
-            // Seção crítica atômica entre abas: check expectedRev + write sob lock.
+            // Atomic critical section across tabs: check expectedRev + write under lock.
             const useLock = options.expectedRev !== undefined;
             const lockToken = useLock ? acquireInventoryLock(600) : null;
-            // Timeout do lock não bloqueia para sempre: rele sem lock — se o rev
-            // mudou, é conflito real e o retry do commit tenta de novo em vez de
-            // sobrescrever às cegas. Sem expectedRev (migração/boot) segue
-            // best-effort mesmo sem lock.
+            // A lock timeout must not block forever: release once without lock — if the rev
+            // changed, it is a real conflict and the commit's retry tries again instead of
+            // blindly overwriting. Without expectedRev (migration/boot) it continues
+            // best-effort even without a lock.
             if (useLock && lockToken === null) {
-                // Não foi possível serializar (contenção ou armazenamento
-                // bloqueado). Rele uma vez sem lock: se o rev mudou, é conflito
-                // real; se igual, segue para a gravação best-effort.
+                // Could not serialize (contention or blocked storage).
+                // Release once without lock: if the rev changed, it is a real
+                // conflict; if equal, proceed to the best-effort write.
                 try {
                     const probe = readCurrentSnapshot();
                     if (probe && probe.rev !== options.expectedRev) {
                         return { ok: false, conflict: true, inventory: probe.inventory, rev: probe.rev };
                     }
-                } catch (err) { /* segue best-effort */ }
+                } catch (err) { /* continue best-effort */ }
             }
             try {
                 if (options.expectedRev !== undefined) {
                     const snapshot = readCurrentSnapshot();
                     if (snapshot && snapshot.rev !== options.expectedRev) {
-                        // Outra aba gravou depois da versão usada como base.
+                        // Another tab wrote after the version used as base.
                         return { ok: false, conflict: true, inventory: snapshot.inventory, rev: snapshot.rev };
                     }
                 }
@@ -1494,7 +1494,7 @@
                 try {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
                 } catch (err) {
-                    console.error("Erro ao salvar no localStorage:", err);
+                    console.error("Error saving to localStorage:", err);
                     cancelSavePulse();
                     storageState.dirty = true;
                     if (err && err.name === 'SecurityError') storageState.available = false;
@@ -1503,16 +1503,17 @@
                 }
 
                 storageState.available = true;
-                // Gravação v3 válida também reativa a sessão (caso o aviso
-                // 'unsupported' ainda estivesse visível por flag obsoleta).
+                // A valid v3 write also re-enables the session (in case the
+                // 'unsupported' warning was still visible due to a stale flag).
                 storageState.unsupported = false;
                 storageState.dirty = false;
                 clearPendingOps();
                 storageState.lastRev = rev;
-                // A v3 foi gravada com sucesso: a v2 legada não tem mais serventia.
-                // Removê-la aqui (além do load) fecha a janela de rollback silencioso
-                // para o caso em que a v3 já era válida e a legada nunca foi consultada.
-                // `options.silent` refere-se apenas ao pulso visual, não ao cleanup.
+                // v3 was written successfully: the legacy v2 is no longer useful.
+                // Removing it here (in addition to on load) closes the window for a
+                // silent rollback in the case where v3 was already valid and the legacy
+                // key was never consulted. `options.silent` refers only to the visual
+                // pulse, not to the cleanup.
                 if (!options.keepLegacy) clearLegacyStorage();
                 setStorageWarning(null);
                 if (!options.silent) triggerSavePulse();
@@ -1524,11 +1525,11 @@
 
         const MAX_COMMIT_ATTEMPTS = 4;
 
-        // Aplica uma alteração local sobre a base mais recente e grava.
-        // Se outra aba gravou no meio, refaz o merge sobre o estado novo em vez de sobrescrever.
-        // options.replace=true (reset): impõe o estado exato em vez de fundir delta —
-        // flores adicionadas por outra aba entre o clique e o commit também são
-        // removidas, em vez de sobreviverem ao reset.
+        // Applies a local change over the most recent base and writes.
+        // If another tab wrote in between, redoes the merge over the new state instead of overwriting.
+        // options.replace=true (reset): imposes the exact state instead of merging a delta —
+        // flowers added by another tab between the click and the commit are also
+        // removed, instead of surviving the reset.
         function commitInventoryChange(applyDelta, options = {}) {
             let adoptedRemote = false;
             const isReplace = !!options.replace;
@@ -1536,25 +1537,25 @@
 
             for (let attempt = 1; attempt <= MAX_COMMIT_ATTEMPTS; attempt++) {
                 const snapshot = readCurrentSnapshot();
-                // Snapshot nulo = formato futuro, corrompido ou bloqueado: sem base
-                // remota confiável; tenta gravar a partir do estado em memória (o
-                // save recusa sozinho se for formato futuro).
+                // Null snapshot = future format, corrupted or blocked: no reliable
+                // remote base; tries to write from the in-memory state (the
+                // save refuses on its own if it is a future format).
                 if (snapshot) {
                     const remoteIsNewer = snapshot.rev !== storageState.lastRev;
 
-                    // Pendências locais que nunca chegaram ao disco também obrigam a rebasear.
-                    // Antes, `dirty` só era consultado DENTRO do ramo do rev: depois de uma
-                    // falha de gravação o rev não mudava, a base voltava a ser a do
-                    // armazenamento e a alteração pendente era sobrescrita na tentativa seguinte.
+                    // Local pending changes that never reached disk also force a rebase.
+                    // Before, `dirty` was only consulted INSIDE the rev branch: after a
+                    // write failure the rev did not change, the base went back to the
+                    // storage one and the pending change was overwritten on the next attempt.
                     const hasLocalPending = storageState.dirty;
 
                     if (remoteIsNewer || hasLocalPending) {
                         storageState.lastRev = snapshot.rev;
-                        // Rebase via tombstones pendentes, NÃO por spread: `{...remoto,
-                        // ...local}` não representa deleção (chave ausente nos dois
-                        // sentidos) e ressuscitava exclusões ainda não salvas.
-                        // No modo replace o rebase é ignorado: o delta final impõe
-                        // o estado exato de qualquer forma.
+                        // Rebase via pending tombstones, NOT by spread: `{...remote,
+                        // ...local}` does not represent deletion (key absent on both
+                        // sides) and resurrected unsaved deletions.
+                        // In replace mode the rebase is ignored: the final delta imposes
+                        // the exact state anyway.
                         if (!isReplace) {
                             appState.inventory = hasLocalPending
                                 ? rebaseWithPending(snapshot.inventory)
@@ -1562,14 +1563,14 @@
                         } else if (remoteIsNewer) {
                             appState.inventory = snapshot.inventory;
                         }
-                        // Só precisa redesenhar quando a base remota mudou; com pendência local
-                        // a grade já reflete o estado em memória.
+                        // Only needs a redraw when the remote base changed; with a local
+                        // pending change the grid already reflects the in-memory state.
                         adoptedRemote = remoteIsNewer;
 
                         if (remoteIsNewer) {
-                            // O histórico descreve uma sequência de estados que não é mais a
-                            // atual (mesma política do listener de "storage"): desfazer sobre
-                            // uma base trocada poderia aplicar a direção errada.
+                            // The history describes a sequence of states that is no longer the
+                            // current one (same policy as the "storage" listener): undoing over
+                            // a swapped base could apply the wrong direction.
                             appState.history = [];
                         }
                     }
@@ -1587,22 +1588,22 @@
                 }
 
                 if (result.unsupported) {
-                    // Formato futuro: nada foi gravado e nada pode ser fundido.
-                    // Mantém a intenção em memória (otimista) + dirty para o
-                    // unload avisar; o aviso 'unsupported' prevalece sobre 'unsaved'.
+                    // Future format: nothing was written and nothing can be merged.
+                    // Keeps the intent in memory (optimistic) + dirty so the
+                    // unload warns; the 'unsupported' warning takes precedence over 'unsaved'.
                     appState.inventory = next;
                     storageState.dirty = true;
                     return { ok: false, unsupported: true, inventory: next, attempts: attempt, adoptedRemote };
                 }
 
                 if (!result.conflict) {
-                    // Falha real de gravação: mantém em memória; o aviso já está na UI.
+                    // Real write failure: keeps in memory; the warning is already in the UI.
                     appState.inventory = next;
                     return { ok: false, inventory: next, attempts: attempt, adoptedRemote };
                 }
 
-                // Conflito: adota a versão da outra aba e reaplica a intenção pendente
-                // sobre ela (mesmo motivo do rebase acima: spread ressuscita exclusão).
+                // Conflict: adopt the other tab's version and reapply the pending intent
+                // over it (same reason as the rebase above: spread resurrects deletions).
                 storageState.lastRev = result.rev;
                 if (!isReplace) {
                     appState.inventory = storageState.dirty
@@ -1610,32 +1611,32 @@
                         : result.inventory;
                 } else {
                     appState.inventory = result.inventory;
-                    // Em modo replace, garante que um reset que falhou adiante
-                    // continue removendo as chaves remotas observadas: registra-as
-                    // como remoção pendente para o próximo rebase/flush.
+                    // In replace mode, ensure a reset that fails later keeps
+                    // removing the observed remote keys: record them as a pending
+                    // removal for the next rebase/flush.
                     trackPendingOps([], Object.keys(result.inventory));
                     storageState.dirty = true;
                 }
                 adoptedRemote = true;
-                // Mesma política do ramo acima: a base mudou por baixo do histórico.
+                // Same policy as the branch above: the base changed under the history.
                 appState.history = [];
             }
 
-            console.warn("Gravação não convergiu após várias tentativas de merge.");
+            console.warn("Write did not converge after several merge attempts.");
             storageState.dirty = true;
             if (storageState.unsupported) {
                 if (storageState.available !== false) setStorageWarning('unsupported');
             } else {
                 setStorageWarning('unsaved');
             }
-            // Preserva a intenção local em memória (otimista) em vez de expor o
-            // snapshot remoto puro: sem isso, o estado interno voltava ao remoto
-            // mas o chamador atualizava o card como se tivesse aplicado — grade e
-            // contadores divergiam. O rebase reaplica os tombstones pendentes
-            // (que incluem o delta atual) sobre o último remoto.
-            // No modo replace, a intenção é o estado exato (reset => {}): mantém o
-            // otimista em vez do remoto puro, senão a grade voltava cheia mas o
-            // toast dizia "reiniciado nesta sessão".
+            // Preserves the local intent in memory (optimistic) instead of exposing the
+            // pure remote snapshot: otherwise, the internal state went back to remote
+            // but the caller updated the card as if it had applied — grid and
+            // counters diverged. The rebase reapplies the pending tombstones
+            // (which include the current delta) over the latest remote state.
+            // In replace mode, the intent is the exact state (reset => {}): keep the
+            // optimistic one instead of the pure remote, otherwise the grid came back
+            // full but the toast said "reset in this session".
             if (!isReplace) {
                 try {
                     const last = readCurrentSnapshot();
@@ -1651,7 +1652,7 @@
             return { ok: false, inventory: appState.inventory, attempts: MAX_COMMIT_ATTEMPTS, adoptedRemote };
         }
 
-        // Estado Único da Aplicação em Memória
+        // Single In-Memory Application State
         const appState = {
             inventory: loadInventoryFromStorage(),
             filters: {
@@ -1663,42 +1664,42 @@
             history: [],
             toastTimeout: null,
             searchTimer: null
-            // "Há alterações não salvas" é lido de storageState.dirty (fonte única).
+            // "There are unsaved changes" is read from storageState.dirty (single source).
         };
 
-        // Devolve o resultado real da gravação: quem chama precisa dele para não
-        // anunciar como salvo algo que o navegador recusou.
-        // A alteração entra como DELTA sobre a base mais recente, para que a gravação
-        // de uma aba não apague o que a outra marcou.
-        // options.replace=true (reset): impõe o estado exato em vez de fundir —
-        // remove inclusive flores que outra aba adicionou após a leitura local.
+        // Returns the real write result: callers need it to avoid
+        // announcing as saved something the browser refused.
+        // The change enters as a DELTA over the most recent base, so that one tab's
+        // write does not erase what the other checked.
+        // options.replace=true (reset): imposes the exact state instead of merging —
+        // removes even flowers another tab added after the local read.
         function setInventoryState(newInv, options = {}) {
             const isReplace = !!options.replace;
             const next = normalizeInventory(newInv);
             const previous = appState.inventory || {};
 
             if (isReplace) {
-                // Reset: descarta adds pendentes (intenção é esvaziar) e marca
-                // todas as chaves locais como remoção; chaves remotas observadas
-                // no commit também viram tombstones (ver commitInventoryChange).
+                // Reset: discards pending adds (intent is to empty) and marks
+                // all local keys as removals; remote keys observed in the commit
+                // also become tombstones (see commitInventoryChange).
                 storageState.pending.added = {};
                 trackPendingOps([], Object.keys(previous));
             } else {
                 const added = Object.keys(next).filter(id => !previous[id]);
                 const removed = Object.keys(previous).filter(id => !next[id]);
 
-                // Registra a intenção ANTES do commit para que um rebase no meio do
-                // caminho (outra aba gravou, ou dirty de falha anterior) reaplique
-                // adds E removes — inclusive o reset para `{}`. Limpo no save ok.
+                // Records the intent BEFORE the commit so that a rebase midway
+                // (another tab wrote, or dirty from a previous failure) reapplies
+                // adds AND removes — including the reset to `{}`. Cleared on save ok.
                 trackPendingOps(added, removed);
             }
 
             const commitFn = isReplace
                 ? () => normalizeInventory(newInv)
                 : (base) => {
-                    // Recomputa o delta contra a base atual do commit (não contra o
-                    // snapshot obsoleto de entrada): mescla add/remove sem
-                    // ressuscitar exclusões.
+                    // Recomputes the delta against the commit's current base (not against
+                    // the stale input snapshot): merges add/remove without
+                    // resurrecting deletions.
                     const prevKeys = new Set(Object.keys(previous));
                     const nextKeys = new Set(Object.keys(next));
                     const merged = { ...base };
@@ -1710,18 +1711,18 @@
             const result = commitInventoryChange(commitFn, { ...options, replace: isReplace });
 
             appState.inventory = result.inventory;
-            // storageState.dirty já foi atualizado por saveInventoryToStorage/commitInventoryChange:
-            // uma segunda flag aqui só criava divergência entre as duas.
+            // storageState.dirty was already updated by saveInventoryToStorage/commitInventoryChange:
+            // a second flag here only created divergence between the two.
 
-            // Uma base remota adotada no meio do caminho deixa a grade desatualizada:
-            // redesenha em vez de confiar só no ajuste incremental do card clicado.
+            // A remote base adopted midway leaves the grid outdated:
+            // redraw instead of trusting only the incremental adjustment of the clicked card.
             if (result.adoptedRemote) renderView();
 
             return result;
         }
 
         /* =========================================
-           9. TOAST & CICLO DE VIDA DO UNDO
+           9. TOAST & UNDO LIFECYCLE
            ========================================= */
         function getLatestHistoryAction() {
             return appState.history.length > 0
@@ -1735,7 +1736,7 @@
             toastUndoBtn.removeAttribute('aria-label');
         }
 
-        // Fecha a notificação e cancela o temporizador pendente.
+        // Closes the notification and cancels the pending timer.
         function dismissToast() {
             clearTimeout(appState.toastTimeout);
             appState.toastTimeout = null;
@@ -1753,7 +1754,7 @@
             if (actionData) {
                 const toastUndoBtn = document.getElementById('toastUndoBtn');
                 toastUndoBtn.classList.remove('hidden');
-                toastUndoBtn.setAttribute('aria-label', `Desfazer alteração em ${actionData.name}`);
+                toastUndoBtn.setAttribute('aria-label', `Undo change on ${actionData.name}`);
             } else {
                 hideToastUndo();
             }
@@ -1763,8 +1764,8 @@
             appState.toastTimeout = setTimeout(dismissToast, 4000);
         }
 
-        // Insere o cartão na posição que ele ocupa em getFilteredFlowers(),
-        // em vez de sempre empurrá-lo para o fim da grade de destino.
+        // Inserts the card at the position it occupies in getFilteredFlowers(),
+        // instead of always pushing it to the end of the target grid.
         function insertCardInOrder(targetGrid, card) {
             const isCollected = card.classList.contains('collected');
             const orderedIds = getFilteredFlowers()
@@ -1777,10 +1778,10 @@
                 return;
             }
 
-            // Percorre TODOS os índices seguintes até achar o primeiro card que realmente
-            // exista no DOM da grade alvo. Olhar só para orderedIds[index + 1] fazia a busca
-            // retornar null quando o vizinho imediato estava ausente (ex.: em outra partição
-            // da grade) e o card era jogado no fim, corrompendo a ordem.
+            // Walks ALL the following indices until it finds the first card that actually
+            // exists in the target grid's DOM. Looking only at orderedIds[index + 1] made the
+            // search return null when the immediate neighbor was absent (e.g. in another
+            // grid partition) and the card was thrown to the end, corrupting the order.
             for (let i = index + 1; i < orderedIds.length; i++) {
                 const nextCard = targetGrid.querySelector(
                     `.flower-card[data-id="${CSS.escape(orderedIds[i])}"]`
@@ -1791,28 +1792,28 @@
                 }
             }
 
-            // Nenhum sucessor presente: a posição correta é o fim da grade.
+            // No successor present: the correct position is the end of the grid.
             targetGrid.appendChild(card);
         }
 
-        // Mantém rótulos e visibilidade das duas seções coerentes com o DOM real das grades.
-        // Sem o rótulo em "Pendentes", duas listas cheias de flores ficavam indistinguíveis.
+        // Keeps the labels and visibility of the two sections consistent with the real DOM of the grids.
+        // Without the label on "Pending", two full lists of flowers were indistinguishable.
         function syncSections() {
             const missingCount = document.getElementById('missingGrid').children.length;
             const collectedCount = document.getElementById('collectedGrid').children.length;
 
             document.getElementById('missingSection').classList.toggle('hidden', missingCount === 0);
             document.getElementById('collectedSection').classList.toggle('hidden', collectedCount === 0);
-            document.getElementById('missingLabel').textContent = `Pendentes (${missingCount})`;
-            document.getElementById('collectedLabel').textContent = `Cultivadas (${collectedCount})`;
+            document.getElementById('missingLabel').textContent = `Pending (${missingCount})`;
+            document.getElementById('collectedLabel').textContent = `Grown (${collectedCount})`;
         }
 
         function updateCardState(id, isCollected) {
             const card = document.querySelector(`.flower-card[data-id="${CSS.escape(id)}"]`);
             if (!card) return null;
 
-            // O nó é movido, nunca recriado: o estado expandido ("melhor rota") sobrevive à troca de grade.
-            // Como mover um nó desfoca o elemento ativo, guardamos e restauramos o foco.
+            // The node is moved, never recreated: the expanded state ("best route") survives the grid swap.
+            // Since moving a node blurs the active element, we save and restore focus.
             const focusedEl = card.contains(document.activeElement) ? document.activeElement : null;
 
             const checkbox = card.querySelector('.checkbox-btn');
@@ -1823,8 +1824,8 @@
                 checkbox.setAttribute(
                     'aria-label',
                     isCollected
-                        ? `Desmarcar ${card.querySelector('.flower-name')?.textContent || id}`
-                        : `Marcar ${card.querySelector('.flower-name')?.textContent || id} como cultivada`
+                        ? `Uncheck ${card.querySelector('.flower-name')?.textContent || id}`
+                        : `Mark ${card.querySelector('.flower-name')?.textContent || id} as grown`
                 );
             }
 
@@ -1837,7 +1838,7 @@
 
             if (focusedEl && focusedEl.isConnected) focusedEl.focus();
 
-            // Atualiza rótulos e visibilidade das duas seções a partir do DOM real.
+            // Updates the labels and visibility of the two sections from the real DOM.
             syncSections();
 
             return checkbox;
@@ -1853,7 +1854,7 @@
         document.getElementById('toastUndoBtn').addEventListener('click', () => {
             const action = getLatestHistoryAction();
             if (!action) {
-                // Sem ação pendente não há o que desfazer: apenas fecha a notificação.
+                // No pending action means nothing to undo: just close the notification.
                 dismissToast();
                 return;
             }
@@ -1869,22 +1870,22 @@
 
             const persisted = setInventoryState(updatedInv).ok;
 
-            // Usa o estado efetivo em memória (pode divergir do pretendido se o
-            // commit adotou base remota e não convergiu): card e contadores nunca
-            // podem mostrar "aplicado" quando o interno ficou remoto.
+            // Uses the effective in-memory state (it may diverge from the intended one if
+            // the commit adopted a remote base and did not converge): card and counters must
+            // never show "applied" when the internal state ended up remote.
             const effectiveUndo = !!appState.inventory[action.id];
             const restoredCheckbox = updateCardState(action.id, effectiveUndo);
             updateProgressOnly();
 
-            // O foco precisa ser capturado ANTES do showToast: ao desfazer a última ação
-            // o botão é escondido, e esconder um elemento com foco o devolve ao <body> —
-            // a comparação com activeElement depois disso nunca batería.
+            // Focus must be captured BEFORE showToast: when undoing the last action
+            // the button is hidden, and hiding a focused element returns focus to <body> —
+            // the comparison with activeElement afterwards would never match.
             const focusWasOnUndo = document.activeElement === document.getElementById('toastUndoBtn');
 
             showToast(
                 persisted
-                    ? `Desfeita alteração em: ${action.name}`
-                    : `Desfeita alteração em: ${action.name} — não foi possível salvar; será perdida ao recarregar a página.`,
+                    ? `Undid change on: ${action.name}`
+                    : `Undid change on: ${action.name} — could not save; it will be lost when the page reloads.`,
                 getLatestHistoryAction()
             );
 
@@ -1892,7 +1893,7 @@
                 if (restoredCheckbox) {
                     restoredCheckbox.focus();
                 } else {
-                    // Card ausente (flor fora dos filtros atuais): aterrissagem de teclado previsível.
+                    // Card absent (flower outside the current filters): predictable keyboard landing spot.
                     document.getElementById('searchInput').focus();
                 }
             }
@@ -1913,40 +1914,40 @@
             }
 
             appState.history.push({ id, prev: wasCollected, name: flower.name });
-            // Undo é intencionalmente volátil e curto: 20 passos em memória, sem
-            // persistência. Recarregar a página, resetar ou receber estado de outra
-            // aba zera o histórico — o toast de 4s é a única janela de desfazer.
+            // Undo is intentionally volatile and short: 20 steps in memory, no
+            // persistence. Reloading the page, resetting, or receiving state from another
+            // tab clears the history — the 4s toast is the only undo window.
             if (appState.history.length > 20) appState.history.shift();
 
-            // A alteração vale em memória antes de qualquer coisa: o card já aparece
-            // marcado. A mensagem só confirma a gravação se ela realmente aconteceu.
-            // O card reflete o estado EFETIVO (result.inventory), não o pretendido:
-            // após 4 conflitos sem convergência o interno preserva a intenção via
-            // rebase, e o card acompanha — nunca mostra sucesso sobre base remota.
+            // The change takes effect in memory before anything else: the card already
+            // appears checked. The message only confirms the write if it actually happened.
+            // The card reflects the EFFECTIVE state (result.inventory), not the intended one:
+            // after 4 conflicts without convergence the internal state preserves the intent via
+            // rebase, and the card follows it — never shows success over a remote base.
             const commitResult = setInventoryState(updatedInv);
             const persisted = !!(commitResult && commitResult.ok);
             const effectiveState = !!appState.inventory[id];
             const checkbox = updateCardState(id, effectiveState);
             updateProgressOnly();
 
-            const statusLabel = effectiveState ? `✓ ${flower.name} cultivada` : `↺ ${flower.name} desmarcada`;
+            const statusLabel = effectiveState ? `✓ ${flower.name} grown` : `↺ ${flower.name} unchecked`;
             showToast(
                 persisted
                     ? statusLabel
-                    : `${statusLabel} — não foi possível salvar; a alteração será perdida ao recarregar a página.`,
+                    : `${statusLabel} — could not save; the change will be lost when the page reloads.`,
                 getLatestHistoryAction()
             );
 
-            // O mesmo elemento DOM é preservado; o foco não é perdido.
+            // The same DOM element is preserved; focus is not lost.
             if (checkbox) checkbox.focus();
         }
 
         /* =========================================
-           10. CRIAÇÃO DE CARDS DOM
+           10. DOM CARD CREATION
            ========================================= */
-        // Expansões ("Mostrar todas" / "Melhor rota") que devem sobreviver a re-renders
-        // completos: renderView recria todos os nós, e mover um card só preserva o
-        // estado no toggle individual. IDs são finitos (a própria base de flores).
+        // Expansions ("Show all" / "Best route") that must survive full re-renders:
+        // renderView recreates all nodes, and moving a card only preserves the
+        // state in the individual toggle. IDs are finite (the flower database itself).
         const expandedCards = { recipes: new Set(), bestPath: new Set() };
 
         function createFlowerCard(flower, isCollected) {
@@ -1988,12 +1989,12 @@
             checkBtn.setAttribute(
                 'aria-label',
                 isCollected
-                    ? `Desmarcar ${flower.name}`
-                    : `Marcar ${flower.name} como cultivada`
+                    ? `Uncheck ${flower.name}`
+                    : `Mark ${flower.name} as grown`
             );
 
-            // O ícone é isolado e escondido por CSS: fora do fluxo de leitura e invisível
-            // enquanto o checkbox estiver desmarcado, mesmo em alto contraste.
+            // The icon is isolated and hidden by CSS: outside the reading flow and invisible
+            // while the checkbox is unchecked, even in high contrast.
             const checkIcon = document.createElement('span');
             checkIcon.className = 'check-icon';
             checkIcon.setAttribute('aria-hidden', 'true');
@@ -2014,7 +2015,7 @@
 
                 const recipeHeader = document.createElement('span');
                 recipeHeader.className = 'recipe-header';
-                recipeHeader.textContent = `Cruzamentos (${flower.recipes.length}):`;
+                recipeHeader.textContent = `Crossbreeds (${flower.recipes.length}):`;
                 recipeBox.appendChild(recipeHeader);
 
                 const recipeList = document.createElement('ul');
@@ -2036,8 +2037,8 @@
                     expandBtn.type = 'button';
                     expandBtn.className = 'expand-btn';
 
-                    // Expõe a relação botão -> lista e o estado (recolhido/estendido) para
-                    // tecnologias assistivas, que antes não sabiam se a lista havia crescido.
+                    // Exposes the button -> list relationship and the state (collapsed/expanded)
+                    // to assistive technologies, which previously did not know whether the list had grown.
                     recipeList.id = `recipes-${flower.id}`;
                     expandBtn.setAttribute('aria-controls', recipeList.id);
                     expandBtn.setAttribute('aria-expanded', 'false');
@@ -2052,7 +2053,7 @@
                             recipeList.appendChild(li);
                         });
                         expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-                        expandBtn.textContent = expanded ? 'Mostrar menos ↑' : `Mostrar todas (${flower.recipes.length}) ↓`;
+                        expandBtn.textContent = expanded ? 'Show less ↑' : `Show all (${flower.recipes.length}) ↓`;
                     };
                     renderRecipeList();
 
@@ -2078,10 +2079,10 @@
                 bestBtn.className = 'best-btn';
                 bestBtn.setAttribute('aria-expanded', pathOpen ? 'true' : 'false');
                 bestBtn.setAttribute('aria-controls', `path-${flower.id}`);
-                
+
                 const btnLabel = document.createElement('span');
-                btnLabel.textContent = `Melhor rota (${flower.bestTime})`;
-                
+                btnLabel.textContent = `Best route (${flower.bestTime})`;
+
                 const arrow = document.createElement('span');
                 arrow.className = 'arrow-icon';
                 arrow.textContent = '▼';
@@ -2094,7 +2095,7 @@
                 bestPathBox.className = 'best-path';
                 if (pathOpen) bestPathBox.classList.add('open');
 
-                const steps = flower.bestSteps.length > 0 ? flower.bestSteps : [`Tempo estimado: ${flower.bestTime}`];
+                const steps = flower.bestSteps.length > 0 ? flower.bestSteps : [`Estimated time: ${flower.bestTime}`];
                 steps.forEach((step, idx) => {
                     const stepDiv = document.createElement('div');
                     stepDiv.className = 'path-step';
@@ -2127,11 +2128,11 @@
         }
 
         /* =========================================
-           11. MÓDULOS DE RENDERIZAÇÃO ESPECÍFICOS
+           11. SPECIFIC RENDER MODULES
            ========================================= */
         function getFilteredFlowers() {
             const { seed, type, search, sort } = appState.filters;
-            
+
             let filtered = flowerDatabase.filter(flower => {
                 const matchSeed = !seed || flower.seed === seed;
                 const matchType = !type || flower.type === type;
@@ -2157,8 +2158,8 @@
 
             document.getElementById('progressFill').style.width = `${pct}%`;
             document.getElementById('globalProgressLabel').textContent = `${collected}/${total} (${pct}%)`;
-            document.getElementById('globalRemainingLabel').textContent = 
-                collected === total ? 'Toda a coleção concluída! 🎉' : `${total - collected} restantes`;
+            document.getElementById('globalRemainingLabel').textContent =
+                collected === total ? 'Entire collection complete! 🎉' : `${total - collected} remaining`;
         }
 
         function renderFilteredProgress(filteredCount, filteredCollectedCount) {
@@ -2169,7 +2170,7 @@
             if (isFilterActive && filteredCount > 0) {
                 clearBtn.classList.remove('hidden');
                 filterSubtext.classList.remove('hidden');
-                filterSubtext.textContent = `Filtro ativo: ${filteredCollectedCount}/${filteredCount} cultivadas`;
+                filterSubtext.textContent = `Active filter: ${filteredCollectedCount}/${filteredCount} grown`;
             } else {
                 if (isFilterActive) {
                     clearBtn.classList.remove('hidden');
@@ -2186,18 +2187,18 @@
 
             if (filteredCount === 0) {
                 emptyState.classList.remove('hidden');
-                // Sem resultados, nenhuma das duas seções pode continuar visível com rótulo.
+                // With no results, neither section may remain visible with its label.
                 document.getElementById('missingSection').classList.add('hidden');
                 document.getElementById('collectedSection').classList.add('hidden');
 
                 const reasons = [];
-                if (appState.filters.seed) reasons.push(`Semente "${appState.filters.seed.split(' (')[0]}"`);
-                if (appState.filters.type) reasons.push(`Tipo "${appState.filters.type}"`);
-                if (appState.filters.search) reasons.push(`Busca "${appState.filters.search}"`);
+                if (appState.filters.seed) reasons.push(`Seed "${appState.filters.seed.split(' (')[0]}"`);
+                if (appState.filters.type) reasons.push(`Type "${appState.filters.type}"`);
+                if (appState.filters.search) reasons.push(`Search "${appState.filters.search}"`);
 
                 emptyMsg.textContent = reasons.length > 0
-                    ? `Nenhum resultado para: ${reasons.join(' + ')}.`
-                    : 'Nenhuma flor encontrada.';
+                    ? `No results for: ${reasons.join(' + ')}.`
+                    : 'No flowers found.';
                 return true;
             }
 
@@ -2231,16 +2232,16 @@
             missingGrid.appendChild(missingFrag);
             collectedGrid.appendChild(collectedFrag);
 
-            // Esconde a seção vazia e recalcula os dois rótulos de uma só vez.
+            // Hides the empty section and recalculates both labels at once.
             syncSections();
 
             return collectedCards;
         }
 
-        // Função de Orquestração Principal
+        // Main Orchestration Function
         function renderView() {
             renderGlobalProgress();
-            
+
             const filtered = getFilteredFlowers();
             const isEmpty = renderEmptyState(filtered.length);
 
@@ -2256,7 +2257,7 @@
         }
 
         /* =========================================
-           12. HANDLERS DE INTERAÇÃO & DEBOUNCE
+           12. INTERACTION HANDLERS & DEBOUNCE
            ========================================= */
         function setupChipGroup(containerId, stateKey) {
             const container = document.getElementById(containerId);
@@ -2279,7 +2280,7 @@
         setupChipGroup('seedChips', 'seed');
         setupChipGroup('typeChips', 'type');
 
-        // Busca com Debounce (120ms)
+        // Search with Debounce (120ms)
         document.getElementById('searchInput').addEventListener('input', (e) => {
             clearTimeout(appState.searchTimer);
             appState.searchTimer = setTimeout(() => {
@@ -2288,16 +2289,16 @@
             }, 120);
         });
 
-        // Ordenação
+        // Sorting
         document.getElementById('sortSelect').addEventListener('change', (e) => {
             appState.filters.sort = e.target.value;
             renderView();
         });
 
-        // Limpar filtros
+        // Clear filters
         function resetFilters() {
-            // Cancela o debounce pendente da busca: sem isso, o temporizador disparava
-            // DEPOIS da limpeza, reativava o filtro de busca e voltava a filtrar a grade.
+            // Cancels the pending search debounce: without this, the timer fired
+            // AFTER the clear, re-enabled the search filter and filtered the grid again.
             clearTimeout(appState.searchTimer);
             appState.searchTimer = null;
 
@@ -2323,27 +2324,27 @@
         document.getElementById('clearFiltersBtn').addEventListener('click', resetFilters);
         document.getElementById('emptyClearBtn').addEventListener('click', resetFilters);
 
-        // Reset da Coleção Inteira
+        // Reset the Entire Collection
         document.getElementById('resetBtn').addEventListener('click', () => {
-            if (confirm('Tem certeza de que deseja resetar todo o progresso de flores cultivadas?')) {
+            if (confirm('Are you sure you want to reset all grown-flower progress?')) {
                 appState.history = [];
-                // replace:true impõe {} exato: flores que outra aba adicionou
-                // após a leitura local também são removidas, em vez de
-                // sobreviverem via merge de delta.
+                // replace:true imposes the exact {}: flowers another tab added
+                // after the local read are also removed, instead of
+                // surviving via the delta merge.
                 const result = setInventoryState({}, { replace: true });
                 const persisted = !!(result && result.ok);
-                // Só anuncia sucesso quando o navegador confirmou a gravação.
+                // Only announce success when the browser confirmed the write.
                 showToast(
                     persisted
-                        ? 'Progresso reiniciado com sucesso.'
-                        : 'Progresso reiniciado apenas nesta sessão — não foi possível salvar.',
+                        ? 'Progress reset successfully.'
+                        : 'Progress reset only in this session — could not save.',
                     null
                 );
                 renderView();
             }
         });
 
-        // Tema Dark/Light — nenhuma falha de armazenamento pode abortar a inicialização.
+        // Dark/Light Theme — no storage failure may abort initialization.
         const themeToggle = document.getElementById('themeToggle');
 
         function readThemePreference() {
@@ -2351,7 +2352,7 @@
                 const saved = localStorage.getItem(THEME_KEY);
                 return saved === 'light' || saved === 'dark' ? saved : null;
             } catch (err) {
-                console.warn("Tema não pôde ser lido do localStorage:", err);
+                console.warn("Theme could not be read from localStorage:", err);
                 return null;
             }
         }
@@ -2361,7 +2362,7 @@
                 localStorage.setItem(THEME_KEY, theme);
                 return true;
             } catch (err) {
-                console.warn("Tema não pôde ser salvo no localStorage:", err);
+                console.warn("Theme could not be saved to localStorage:", err);
                 return false;
             }
         }
@@ -2371,35 +2372,35 @@
             themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
             themeToggle.setAttribute(
                 'aria-label',
-                theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'
+                theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
             );
         }
 
-        // Sem preferência salva, o tema vem do sistema operacional (prefers-color-scheme)
-        // em vez de forçar dark para quem nunca tocou no botão.
+        // With no saved preference, the theme comes from the operating system
+        // (prefers-color-scheme) instead of forcing dark on those who never touched the button.
         function getSystemTheme() {
             return (typeof window.matchMedia === 'function'
                 && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
         }
 
         function initTheme() {
-            // A preferência detectada NÃO é gravada: enquanto o usuário não escolher
-            // explicitamente, o app continua acompanhando o sistema.
+            // The detected preference is NOT saved: until the user chooses
+            // explicitly, the app keeps following the system.
             applyTheme(readThemePreference() || getSystemTheme());
         }
 
-        // O tema do sistema pode mudar com o app já aberto (agendamento automático do SO).
+        // The system theme can change while the app is open (OS automatic scheduling).
         if (typeof window.matchMedia === 'function') {
             const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
             const onSystemThemeChange = () => {
-                if (readThemePreference()) return; // escolha explícita do usuário prevalece
+                if (readThemePreference()) return; // the user's explicit choice takes precedence
                 applyTheme(systemThemeQuery.matches ? 'light' : 'dark');
             };
 
             if (typeof systemThemeQuery.addEventListener === 'function') {
                 systemThemeQuery.addEventListener('change', onSystemThemeChange);
             } else if (typeof systemThemeQuery.addListener === 'function') {
-                systemThemeQuery.addListener(onSystemThemeChange); // navegadores antigos
+                systemThemeQuery.addListener(onSystemThemeChange); // old browsers
             }
         }
 
@@ -2411,10 +2412,10 @@
         });
 
         /* =========================================
-           13. SINCRONIZAÇÃO ENTRE ABAS
+           13. CROSS-TAB SYNC
            ========================================= */
-        // Guarda o foco atual (card + controle interno) para devolvê-lo depois de uma
-        // reconstrução completa da grade, que recria todos os nós.
+        // Saves the current focus (card + inner control) to restore it after a
+        // full grid rebuild, which recreates every node.
         function captureCardFocus() {
             const active = document.activeElement;
             if (!active || typeof active.closest !== 'function') return null;
@@ -2439,31 +2440,31 @@
             if (target) target.focus();
         }
 
-        // Uma alteração feita em outra aba precisa refletir nos cards e nos contadores
-        // sem exigir interação local ou recarga.
+        // A change made in another tab must reflect on the cards and counters
+        // without requiring local interaction or a reload.
         window.addEventListener('storage', (event) => {
-            // event.key === null indica localStorage.clear() em outra aba.
+            // event.key === null indicates localStorage.clear() in another tab.
             if (event.key !== null && event.key !== STORAGE_KEY && event.key !== LEGACY_STORAGE_KEY) return;
 
-            // Alterações locais que não puderam ser salvas prevalecem nesta aba; o aviso
-            // persistente no topo já informa que elas serão perdidas ao recarregar.
+            // Local changes that could not be saved take precedence in this tab; the
+            // persistent warning at the top already says they will be lost on reload.
             if (storageState.dirty) return;
 
             const snapshot = readCurrentSnapshot();
-            // Evento repetido ou fora de ordem: nada novo a aplicar.
+            // Repeated or out-of-order event: nothing new to apply.
             if (snapshot && snapshot.rev !== null && snapshot.rev === storageState.lastRev) return;
             if (snapshot) storageState.lastRev = snapshot.rev;
 
             const incoming = loadInventoryFromStorage({ rewrite: false });
-            // rev mudou mas o conteúdo final é idêntico: as operações da outra aba
-            // se anularam (ex.: marcou e desmarcou). As direções registradas no
-            // histórico local continuam válidas, então ele é preservado de propósito
-            // — limpar aqui destruiria undos sem nenhum ganho. (lastRev já foi
-            // atualizado acima, então eventos repetidos seguem ignorados.)
+            // The rev changed but the final content is identical: the other tab's
+            // operations cancelled each other out (e.g. checked and unchecked). The directions
+            // recorded in the local history remain valid, so it is kept on purpose
+            // — clearing it here would destroy undos for no gain. (lastRev was already
+            // updated above, so repeated events stay ignored.)
             if (JSON.stringify(incoming) === JSON.stringify(appState.inventory)) return;
 
             appState.inventory = incoming;
-            // O histórico local descreve uma sequência de estados que não é mais a atual.
+            // The local history describes a sequence of states that is no longer the current one.
             appState.history = [];
             dismissToast();
 
@@ -2472,20 +2473,20 @@
             restoreCardFocus(focusSnapshot);
         });
 
-        // Alterações que nunca chegaram ao disco merecem uma última chance antes de
-        // sair: tenta persistir de forma síncrona (localStorage permite) e, só se
-        // ainda restar pendência, exibe o diálogo de confirmação.
-        // beforeunload não é confiável no Safari iOS (muitas vezes nem dispara);
-        // pagehide + visibilitychange cobrem o fechamento/background mobile.
+        // Changes that never reached disk deserve a last chance before leaving:
+        // tries to persist synchronously (localStorage allows it) and, only if
+        // something is still pending, shows the confirmation dialog.
+        // beforeunload is unreliable on iOS Safari (often does not even fire);
+        // pagehide + visibilitychange cover closing/backgrounding on mobile.
         function tryFlushPendingSaves() {
             if (!storageState.dirty) return;
-            // Commit best-effort com delta identidade: o rebase interno reaplica os
-            // tombstones pendentes sobre o snapshot mais recente e tenta gravar.
-            // Sem renderização aqui — só persistência. Falha silenciosa cai no diálogo.
+            // Best-effort commit with an identity delta: the internal rebase reapplies the
+            // pending tombstones over the most recent snapshot and tries to write.
+            // No rendering here — persistence only. A silent failure falls to the dialog.
             try {
                 commitInventoryChange((base) => base, { silent: true });
             } catch (err) {
-                console.warn('Tentativa final de salvamento falhou:', err);
+                console.warn('Final save attempt failed:', err);
             }
         }
 
@@ -2497,9 +2498,9 @@
             event.returnValue = '';
         });
 
-        // iOS Safari: pagehide é o sinal confiável de saída; visibilitychange cobre
-        // o app indo para background sem descarregar. Ambos são síncronos e sem
-        // diálogo — apenas best-effort para não perder marcações.
+        // iOS Safari: pagehide is the reliable exit signal; visibilitychange covers
+        // the app going to background without being unloaded. Both are synchronous and
+        // dialog-free — just best-effort so checks are not lost.
         window.addEventListener('pagehide', () => {
             tryFlushPendingSaves();
         });
@@ -2508,7 +2509,7 @@
             if (document.visibilityState === 'hidden') tryFlushPendingSaves();
         });
 
-        // Inicialização
+        // Initialization
         initTheme();
         renderView();
     </script>

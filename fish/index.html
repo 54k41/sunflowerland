@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guia de Pesca</title>
+    <title>Fishing Guide</title>
     <script>
-        /* As chaves de armazenamento ficam declaradas aqui, antes do CSS, porque o
-           script anti-FOUC abaixo precisa de THEME_KEY. O script principal no fim
-           do <body> reaproveita estas constantes e não as redeclara. */
+        /* The storage keys are declared here, before the CSS, because the
+           anti-FOUC script below needs THEME_KEY. The main script at the end
+           of the <body> reuses these constants and does not redeclare them. */
         const STORAGE_KEY = 'fishInventory_v1';
         const THEME_KEY = 'fishTheme_v1';
         const FILTERS_KEY = 'fishFilters_v1';
 
-        /* Anti-FOUC: o tema é decidido antes de o CSS ser lido. Sem isso a página
-           nasce no tema escuro (padrão de :root) e "pisca" para o claro quando o
-           script do fim do <body> roda. */
+        /* Anti-FOUC: the theme is decided before the CSS is parsed. Without this
+           the page starts in the dark theme (the :root default) and "flashes"
+           to light when the script at the end of the <body> runs. */
         (function () {
             let theme = null;
 
@@ -22,7 +22,7 @@
                 const saved = localStorage.getItem(THEME_KEY);
                 if (saved === 'dark' || saved === 'light') theme = saved;
             } catch (e) {
-                // Armazenamento bloqueado: segue para a preferência do sistema.
+                // Storage blocked: fall back to the system preference.
             }
 
             if (!theme) {
@@ -36,7 +36,7 @@
     </script>
     <style>
         /* =========================================
-           1. VARIÁVEIS E TEMAS (Design Tokens)
+           1. VARIABLES & THEMES (Design Tokens)
            ========================================= */
         :root {
             color-scheme: dark;
@@ -95,7 +95,7 @@
         }
 
         /* =========================================
-           3. CABEÇALHO
+           3. HEADER
            ========================================= */
         header {
             display: flex;
@@ -140,7 +140,7 @@
         }
 
         /* =========================================
-           4. FILTROS EM CHIPS & MODOS DE EXIBIÇÃO
+           4. CHIP FILTERS & VIEW MODES
            ========================================= */
         .filter-group {
             display: flex;
@@ -188,7 +188,7 @@
         }
 
         /* =========================================
-           4b. BUSCA INSTANTÂNEA
+           4b. INSTANT SEARCH
            ========================================= */
         .search-box {
             position: relative;
@@ -235,19 +235,19 @@
             background: var(--bg-hover);
         }
 
-        /* O atributo hidden precisa vencer o display: flex declarado acima. */
+        /* The hidden attribute needs to win over the display: flex declared above. */
         .search-clear[hidden] {
             display: none;
         }
 
-        /* O type="search" mostra um botão × nativo no Chrome/Edge/Safari que
-           ficaria sobreposto ao botão .search-clear do app. */
+        /* The type="search" shows a native × button on Chrome/Edge/Safari that
+           would overlap the app's .search-clear button. */
         .search-input::-webkit-search-cancel-button {
             display: none;
         }
 
         /* =========================================
-           5. STATUS & PROGRESSO DUPLO
+           5. STATUS & DUAL PROGRESS
            ========================================= */
         .progress-box {
             display: flex;
@@ -314,7 +314,7 @@
         }
 
         /* =========================================
-           6. LISTA DE PEIXES (CARDS BUTTONS)
+           6. FISH LIST (CARD BUTTONS)
            ========================================= */
         .fish-grid {
             display: grid;
@@ -376,10 +376,10 @@
             transition: all 0.15s;
         }
 
-        /* O chum pode ter dois ingredientes (ex.: "Crab, Fat Chicken"). Com nowrap
-           + ellipsis, o segundo ingrediente era cortado sem deixar pista do que
-           faltava. Agora o texto quebra em até duas linhas e o title do card
-           oferece a lista completa. */
+        /* The chum can have two ingredients (e.g. "Crab, Fat Chicken"). With nowrap
+           + ellipsis, the second ingredient was cut off without any hint of what
+           was missing. Now the text wraps onto up to two lines and the card title
+           offers the full list. */
         .fish-meta {
             font-size: 0.72rem;
             color: var(--text-secondary);
@@ -396,7 +396,7 @@
             font-weight: 500;
         }
 
-        /* Estado: Capturado */
+        /* State: Collected */
         .fish-card.collected {
             background: transparent;
             opacity: 0.55;
@@ -432,7 +432,7 @@
 
         .hidden { display: none !important; }
 
-        /* Texto disponível apenas para leitores de tela. */
+        /* Text available only to screen readers. */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -447,7 +447,7 @@
         }
 
         /* =========================================
-           7. FEEDBACK / TOAST DE DESFAZER
+           7. FEEDBACK / UNDO TOAST
            ========================================= */
         .toast {
             position: fixed;
@@ -462,8 +462,8 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            /* As mensagens carregam o contador de alterações pendentes; sem
-               contenção, texto + botão estouram a largura em telas de 360px. */
+            /* The messages carry the pending-changes counter; without
+               containment, text + button overflow the width on 360px screens. */
             width: max-content;
             max-width: min(560px, calc(100vw - 32px));
             flex-wrap: wrap;
@@ -487,9 +487,9 @@
             pointer-events: auto;
         }
 
-        /* Estado fechado: além de transparente e deslocado, o toast sai da ordem de
-           tabulação e da árvore de acessibilidade. A classe .toast define display:flex,
-           por isso o !important é necessário para o atributo hidden prevalecer. */
+        /* Closed state: besides being transparent and offset, the toast leaves the
+           tab order and the accessibility tree. The .toast class sets display:flex,
+           which is why !important is needed for the hidden attribute to win. */
         .toast[hidden] {
             display: none !important;
         }
@@ -506,7 +506,7 @@
         }
 
         /* =========================================
-           8. AÇÕES DE DADOS (BACKUP)
+           8. DATA ACTIONS (BACKUP)
            ========================================= */
         .data-actions {
             display: flex;
@@ -541,25 +541,25 @@
 
     <div class="container">
         <header>
-            <h1>Guia de Pesca</h1>
-            <button id="themeToggle" class="theme-btn" aria-label="Alternar tema">☀️</button>
+            <h1>Fishing Guide</h1>
+            <button id="themeToggle" class="theme-btn" aria-label="Toggle theme">☀️</button>
         </header>
 
-        <!-- Filtros em Chips -->
+        <!-- Chip Filters -->
         <div class="filter-group">
-            <span class="filter-label" id="viewFilterLabel">Exibição</span>
-            <!-- Um modo de exibição sempre precisa estar ativo (não dá para
-                 desmarcar todos), então a semântica correta é radiogroup: um item
-                 selecionado por vez, exposto por aria-checked. -->
+            <span class="filter-label" id="viewFilterLabel">View</span>
+            <!-- A view mode always needs to be active (they cannot all be
+                 unchecked), so the correct semantics is radiogroup: one item
+                 selected at a time, exposed via aria-checked. -->
             <div class="chip-row" id="viewChips" role="radiogroup" aria-labelledby="viewFilterLabel">
-                <button type="button" class="chip active" data-val="all" role="radio" aria-checked="true" tabindex="0">Todos</button>
-                <button type="button" class="chip" data-val="missing" role="radio" aria-checked="false" tabindex="-1">Faltantes</button>
-                <button type="button" class="chip" data-val="collected" role="radio" aria-checked="false" tabindex="-1">Capturados</button>
+                <button type="button" class="chip active" data-val="all" role="radio" aria-checked="true" tabindex="0">All</button>
+                <button type="button" class="chip" data-val="missing" role="radio" aria-checked="false" tabindex="-1">Missing</button>
+                <button type="button" class="chip" data-val="collected" role="radio" aria-checked="false" tabindex="-1">Collected</button>
             </div>
         </div>
 
         <div class="filter-group">
-            <span class="filter-label" id="baitFilterLabel">Isca</span>
+            <span class="filter-label" id="baitFilterLabel">Bait</span>
             <div class="chip-row" id="baitChips" role="group" aria-labelledby="baitFilterLabel">
                 <button type="button" class="chip" data-val="Earthworm" aria-pressed="false">Earthworm</button>
                 <button type="button" class="chip" data-val="Grub" aria-pressed="false">Grub</button>
@@ -569,7 +569,7 @@
         </div>
 
         <div class="filter-group">
-            <span class="filter-label" id="seasonFilterLabel">Estação</span>
+            <span class="filter-label" id="seasonFilterLabel">Season</span>
             <div class="chip-row" id="seasonChips" role="group" aria-labelledby="seasonFilterLabel">
                 <button type="button" class="chip" data-val="Spring" aria-pressed="false">Spring</button>
                 <button type="button" class="chip" data-val="Summer" aria-pressed="false">Summer</button>
@@ -578,75 +578,76 @@
             </div>
         </div>
 
-        <!-- Progresso Detalhado -->
-        <section class="progress-box" aria-label="Progresso da Coleção">
+        <!-- Detailed Progress -->
+        <section class="progress-box" aria-label="Collection Progress">
             <div class="progress-header">
-                <span class="progress-title" id="progressTitle">Progresso Total da Coleção</span>
+                <span class="progress-title" id="progressTitle">Total Collection Progress</span>
                 <span id="globalProgressCount" class="progress-numbers">0/0 (0%)</span>
             </div>
-            <!-- O indicador carrega o próprio nome acessível: o rótulo da <section>
-                 pai não identifica o widget para as tecnologias assistivas. -->
+            <!-- The indicator carries its own accessible name: the parent <section>
+                 label does not identify the widget for assistive technologies. -->
             <div class="progress-bar" role="progressbar" id="progressBar" aria-labelledby="progressTitle" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                 <div id="progressFill" class="progress-fill"></div>
             </div>
             <div class="progress-sub">
-                <span id="filterProgressLabel">Filtro ativo: Todos</span>
-                <span id="filterProgressCount">0/0 capturados</span>
+                <span id="filterProgressLabel">Active filter: All</span>
+                <span id="filterProgressCount">0/0 collected</span>
             </div>
         </section>
 
-        <!-- Busca instantânea por peixe -->
-        <div class="search-box" role="search" aria-label="Buscar um peixe">
-            <label class="sr-only" for="searchInput">Buscar um peixe</label>
+        <!-- Instant search by fish -->
+        <div class="search-box" role="search" aria-label="Search for a fish">
+            <label class="sr-only" for="searchInput">Search for a fish</label>
             <input type="search" id="searchInput" class="search-input"
-                   placeholder="Buscar um peixe…" autocomplete="off" spellcheck="false">
-            <button type="button" id="searchClear" class="search-clear" aria-label="Limpar busca" hidden>✕</button>
+                   placeholder="Search for a fish…" autocomplete="off" spellcheck="false">
+            <button type="button" id="searchClear" class="search-clear" aria-label="Clear search" hidden>✕</button>
         </div>
 
-        <!-- Resultados -->
+        <!-- Results -->
         <main id="resultsArea">
             <div id="missingContainer">
-                <h2 class="section-label" id="missingLabel">Faltantes</h2>
+                <h2 class="section-label" id="missingLabel">Missing</h2>
                 <div id="missingGrid" class="fish-grid"></div>
             </div>
 
             <div id="collectedContainer">
-                <h2 class="section-label" id="collectedLabel">Capturados</h2>
+                <h2 class="section-label" id="collectedLabel">Collected</h2>
                 <div id="collectedGrid" class="fish-grid"></div>
             </div>
 
             <div id="emptyState" class="empty-message hidden" tabindex="-1">
-                Nenhum peixe encontrado com os filtros selecionados.
+                No fish found with the selected filters.
             </div>
         </main>
 
-        <!-- Backup do progresso: o inventário vive só no localStorage deste
-             navegador, então exportar/importar/redefinir evitam perder tudo ao
-             limpar os dados do navegador ou trocar de aparelho. -->
+        <!-- Progress backup: the inventory lives only in this browser's
+             localStorage, so exporting/importing/resetting prevents losing
+             everything when clearing browser data or switching devices. -->
         <footer class="data-actions">
-            <button type="button" id="exportBtn" class="link-btn">Exportar progresso</button>
-            <button type="button" id="importBtn" class="link-btn">Importar</button>
-            <button type="button" id="resetBtn" class="link-btn link-btn-danger">Redefinir coleção</button>
+            <button type="button" id="exportBtn" class="link-btn">Export progress</button>
+            <button type="button" id="importBtn" class="link-btn">Import</button>
+            <button type="button" id="resetBtn" class="link-btn link-btn-danger">Reset collection</button>
             <input type="file" id="importInput" class="sr-only" accept="application/json,.json"
                    tabindex="-1" aria-hidden="true">
         </footer>
     </div>
 
-    <!-- Feedback com Ação de Desfazer.
-         O toast fica hidden + inert enquanto fechado, para que o botão não seja
-         alcançável pelo teclado nem exista antes da primeira notificação. Como isso
-         o retira da árvore de acessibilidade, os anúncios passam a sair da região
-         viva permanente abaixo (#toastAnnouncer), que nunca sai do documento. -->
-    <div id="toast" class="toast" role="group" aria-label="Notificação" hidden inert>
+    <!-- Feedback with Undo Action.
+         The toast is hidden + inert while closed, so the button is not reachable
+         by keyboard and does not even exist before the first notification. Since
+         this removes it from the accessibility tree, announcements come from the
+         permanent live region below (#toastAnnouncer), which never leaves the
+         document. -->
+    <div id="toast" class="toast" role="group" aria-label="Notification" hidden inert>
         <span id="toastMsg" class="toast-msg"></span>
-        <button id="toastUndo" class="toast-undo-btn" type="button">Desfazer</button>
+        <button id="toastUndo" class="toast-undo-btn" type="button">Undo</button>
     </div>
 
     <div id="toastAnnouncer" class="sr-only" role="status" aria-live="polite"></div>
 
     <script>
-        /* STORAGE_KEY, THEME_KEY e FILTERS_KEY são declaradas no <script> do
-           <head>, que roda antes do CSS por causa do anti-FOUC. */
+        /* STORAGE_KEY, THEME_KEY and FILTERS_KEY are declared in the <head>
+           <script>, which runs before the CSS because of the anti-FOUC. */
 
         const fishDatabase = [
             { name: "Anchovy", baits: ["Earthworm"], chums: ["Carrot", "Egg"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
@@ -689,10 +690,10 @@
             { name: "Weakfish", baits: ["Redwiggler"], chums: ["Artichoke"], seasons: ["Spring"] }
         ];
 
-        // Cache dos nomes válidos para evitar reconstrução a cada chamada de getInventory()
+        // Cache of the valid names to avoid rebuilding on every getInventory() call
         const validFishNames = new Set(fishDatabase.map(f => f.name));
 
-        // 1 & 4. Helpers de Armazenamento com Fallback, Validação e Limpeza
+        // 1 & 4. Storage Helpers with Fallback, Validation and Sanitization
         function safeGetJSON(key, fallback) {
             try {
                 const item = localStorage.getItem(key);
@@ -703,13 +704,13 @@
             }
         }
 
-        // Retorna true somente quando a gravação realmente aconteceu.
+        // Returns true only when the write actually happened.
         function safeSetJSON(key, val) {
             try {
                 localStorage.setItem(key, JSON.stringify(val));
                 return true;
             } catch (e) {
-                console.warn('Falha ao salvar no localStorage:', e);
+                console.warn('Failed to save to localStorage:', e);
                 return false;
             }
         }
@@ -717,7 +718,7 @@
         function sanitizeInventory(raw) {
             if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
 
-            // Higienização contra peixes inexistentes no banco
+            // Sanitization against fish that do not exist in the database
             const clean = {};
             for (const [key, val] of Object.entries(raw)) {
                 if (validFishNames.has(key) && val === true) {
@@ -731,9 +732,10 @@
             return sanitizeInventory(safeGetJSON(STORAGE_KEY, {}));
         }
 
-        // O inventário desta aba vive em memória; o localStorage é apenas a cópia
-        // persistente. Se a gravação falhar, a marcação continua visível e coerente
-        // com o que o usuário acabou de fazer, mas ele é avisado de que nada foi salvo.
+        // This tab's inventory lives in memory; localStorage is only the
+        // persistent copy. If the write fails, the checkmark stays visible and
+        // consistent with what the user just did, but they are warned that
+        // nothing was saved.
         let inventoryCache = null;
         let hasUnsavedInventory = false;
 
@@ -751,14 +753,14 @@
             return saved;
         }
 
-        // Base para escritas por peixe (toggle/desfazer). Lê o storage na hora
-        // em vez de partir só do cache: se outra aba gravou depois do último
-        // evento 'storage' recebido aqui, o cache está defasado e gravar a
-        // partir dele apagaria a alteração externa (last-write-wins do objeto
-        // inteiro). Quando há gravação pendente local (hasUnsavedInventory),
-        // a união preserva as marcas feitas aqui que ainda não foram salvas;
-        // limitação conhecida: a união não preserva remoções (ver handler de
-        // 'storage') e favorece nunca perder progresso.
+        // Base for per-fish writes (toggle/undo). Reads the storage on the spot
+        // instead of relying only on the cache: if another tab wrote after the
+        // last 'storage' event received here, the cache is stale and writing
+        // from it would erase the external change (last-write-wins of the whole
+        // object). When there is a pending local write (hasUnsavedInventory),
+        // the union preserves the marks made here that have not been saved yet;
+        // known limitation: the union does not preserve removals (see the
+        // 'storage' handler) and favors never losing progress.
         function getBaseInventoryForWrite() {
             const fresh = readInventoryFromStorage();
             if (!hasUnsavedInventory || inventoryCache === null) {
@@ -767,14 +769,14 @@
             return { ...fresh, ...inventoryCache };
         }
 
-        // 8. Estado inicial dos Filtros com Persistência
+        // 8. Initial Filter State with Persistence
         const defaultState = { bait: '', season: '', view: 'all' };
 
         const viewChipsEl = document.getElementById('viewChips');
         const baitChipsEl = document.getElementById('baitChips');
         const seasonChipsEl = document.getElementById('seasonChips');
 
-        // Valida filtros persistidos contra os valores realmente existentes na UI.
+        // Validates persisted filters against the values that actually exist in the UI.
         const validBaits = new Set(
             [...baitChipsEl.querySelectorAll('.chip')].map(chip => chip.dataset.val)
         );
@@ -787,8 +789,8 @@
 
         const state = { bait: '', season: '', view: 'all' };
 
-        // A busca textual é transitória: não é persistida nem sincronizada entre
-        // abas, porque descreve o que a pessoa está procurando agora.
+        // The text search is transient: it is not persisted nor synced between
+        // tabs, because it describes what the person is looking for right now.
         let searchQuery = '';
 
         function validateFilters(raw) {
@@ -805,7 +807,7 @@
             return validateFilters(safeGetJSON(FILTERS_KEY, defaultState));
         }
 
-        // Aplica um conjunto de filtros ao estado e reflete a escolha nos chips.
+        // Applies a set of filters to the state and reflects the choice on the chips.
         function applyFilters(filters) {
             state.bait = filters.bait;
             state.season = filters.season;
@@ -816,7 +818,7 @@
             applyStateToChips(seasonChipsEl, 'season');
         }
 
-        // Só as três escolhas persistíveis são gravadas — a busca fica de fora.
+        // Only the three persistable choices are saved — the search stays out.
         function saveFiltersState() {
             safeSetJSON(FILTERS_KEY, { bait: state.bait, season: state.season, view: state.view });
         }
@@ -825,10 +827,10 @@
         const initialFilters = validateFilters(rawSavedFilters);
         applyFilters(initialFilters);
 
-        // Remove do armazenamento eventuais filtros órfãos detectados na
-        // inicialização. A comparação é campo a campo (não via JSON.stringify)
-        // para não regravar quando o objeto salvo só difere na ordem das chaves.
-        // O acesso é protegido porque o valor salvo pode não ser um objeto.
+        // Removes any orphan filters detected at startup from storage. The
+        // comparison is field by field (not via JSON.stringify) to avoid
+        // rewriting when the saved object only differs in key order. The access
+        // is guarded because the saved value may not be an object.
         const savedFilters = (rawSavedFilters && typeof rawSavedFilters === 'object') ? rawSavedFilters : {};
         if (savedFilters.bait !== initialFilters.bait
             || savedFilters.season !== initialFilters.season
@@ -836,7 +838,7 @@
             safeSetJSON(FILTERS_KEY, initialFilters);
         }
 
-        // 5 & 9. Tema Seguro com Detecção do Sistema
+        // 5 & 9. Safe Theme with System Detection
         const themeToggle = document.getElementById('themeToggle');
         const systemThemeMedia = window.matchMedia
             ? window.matchMedia('(prefers-color-scheme: light)')
@@ -876,7 +878,7 @@
             applyTheme(current === 'dark' ? 'light' : 'dark', true);
         });
 
-        // Quando o usuário não escolheu um tema manualmente, acompanha o sistema.
+        // When the user has not chosen a theme manually, follow the system.
         if (systemThemeMedia) {
             const handleSystemThemeChange = () => {
                 if (!getSavedTheme()) {
@@ -891,15 +893,15 @@
             }
         }
 
-        // 7. Toast, Feedback de Desfazer e Anúncios
+        // 7. Toast, Undo Feedback and Announcements
         const TOAST_DURATION = 4000;
         const TOAST_CONFIRM_DURATION = 1600;
-        const TOAST_EXIT_MS = 300; // um pouco acima da transição de saída (0.25s), para escondê-lo só depois do fim da animação
+        const TOAST_EXIT_MS = 300; // slightly above the exit transition (0.25s), so it is hidden only after the animation ends
         const MAX_UNDO_STEPS = 20;
 
-        // Pilha de alterações desfazíveis. Antes existia só um `lastAction`: cada
-        // clique novo sobrescrevia o anterior, então apenas a última marcação podia
-        // ser desfeita. A pilha vale enquanto o toast de desfazer estiver aberto.
+        // Stack of undoable changes. There used to be only a single `lastAction`:
+        // each new click overwrote the previous one, so only the last checkmark
+        // could be undone. The stack is valid while the undo toast is open.
         let undoStack = [];
         let toastTimeout = null;
         let toastExitTimeout = null;
@@ -914,9 +916,9 @@
             return `${count} ${count === 1 ? singular : plural}`;
         }
 
-        // A região viva é esvaziada antes de receber o texto novo: mensagens
-        // repetidas em sequência ("X marcado como capturado." duas vezes) não
-        // mudariam o conteúdo e alguns leitores de tela não anunciariam nada.
+        // The live region is emptied before receiving the new text: repeated
+        // messages in a row ("X marked as collected." twice) would not change the
+        // content and some screen readers would announce nothing.
         function announce(message) {
             if (!toastAnnouncer) return;
 
@@ -929,8 +931,8 @@
             }, 60);
         }
 
-        // O toast entra na ordem de tabulação e na árvore de acessibilidade apenas
-        // enquanto está visível.
+        // The toast enters the tab order and the accessibility tree only while
+        // it is visible.
         function openToast() {
             if (toastExitTimeout) {
                 clearTimeout(toastExitTimeout);
@@ -940,13 +942,14 @@
             if (toastEl.hidden) {
                 toastEl.hidden = false;
                 toastEl.removeAttribute('inert');
-                void toastEl.offsetWidth; // força o reflow para a transição de entrada rodar
+                void toastEl.offsetWidth; // forces the reflow so the enter transition runs
             }
 
             toastEl.classList.add('visible');
         }
 
-        // A saída respeita o fim da animação: só então o toast é escondido de fato.
+        // The exit respects the end of the animation: only then is the toast
+        // actually hidden.
         function closeToast() {
             toastEl.classList.remove('visible');
 
@@ -960,8 +963,8 @@
             }, TOAST_EXIT_MS);
         }
 
-        // Fecha a notificação sem executar ação, cancela o temporizador pendente e
-        // encerra a janela de desfazer.
+        // Closes the notification without performing an action, cancels the
+        // pending timer and ends the undo window.
         function dismissToast() {
             if (toastTimeout) {
                 clearTimeout(toastTimeout);
@@ -976,14 +979,14 @@
             if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
         }
 
-        // `undoable: false` (o padrão) encerra a janela de desfazer: uma notificação
-        // que não é de desfazer significa que a pessoa já seguiu adiante.
+        // `undoable: false` (the default) ends the undo window: a notification
+        // that is not undoable means the person has already moved on.
         function showToast(message, { undoable = false, duration = TOAST_DURATION } = {}) {
             if (!undoable) undoStack = [];
 
             toastMsg.textContent = message;
             toastUndo.textContent = undoable
-                ? (undoStack.length > 1 ? `Desfazer (${undoStack.length})` : 'Desfazer')
+                ? (undoStack.length > 1 ? `Undo (${undoStack.length})` : 'Undo')
                 : 'OK';
 
             announce(message);
@@ -996,8 +999,8 @@
             }, duration);
         }
 
-        // Depois de render(), o card só permanece no documento se o peixe passa
-        // nos filtros e no modo de exibição atuais — o resto é removido do DOM.
+        // After render(), the card only remains in the document if the fish passes
+        // the current filters and view mode — the rest is removed from the DOM.
         function isFishCardVisible(name) {
             return ['missingGrid', 'collectedGrid'].some(id => {
                 const grid = document.getElementById(id);
@@ -1006,8 +1009,8 @@
         }
 
         toastUndo.addEventListener('click', () => {
-            // Sem ação pendente o botão é apenas um "OK": fecha a notificação e
-            // cancela o temporizador em vez de não fazer nada.
+            // With no pending action the button is just an "OK": closes the
+            // notification and cancels the timer instead of doing nothing.
             if (undoStack.length === 0) {
                 dismissToast();
                 return;
@@ -1017,24 +1020,25 @@
             const { name, previousState } = entry;
             const isRetry = !!entry.retryPending;
 
-            // Retentativa de um desfazer cuja gravação falhou: o cache JÁ está
-            // no estado restaurado (previousState), então a guarda de
-            // "alteração externa" abaixo acusaria falso-positivo
-            // (cache === previousState) e travaria sem tentar gravar de novo.
-            // Por isso a retentativa pula a guarda e reaplica o estado de forma
-            // idempotente antes de persistir.
+            // Retry of an undo whose write failed: the cache is ALREADY in the
+            // restored state (previousState), so the "external change" guard
+            // below would produce a false positive (cache === previousState)
+            // and block without trying to write again. That is why the retry
+            // skips the guard and re-applies the state idempotently before
+            // persisting.
             const inv = getBaseInventoryForWrite();
 
             if (!isRetry) {
-                // Se o estado atual já não é o que a ação deixou para trás, algo
-                // externo (outra aba, importação) mexeu neste peixe depois dela:
-                // restaurar às cegas destruiria a mudança mais recente.
+                // If the current state is no longer what the action left behind,
+                // something external (another tab, an import) touched this fish
+                // after it: restoring blindly would destroy the most recent
+                // change.
                 if (!!inv[name] === !!previousState) {
                     if (undoStack.length === 0) {
-                        showToast(`${name} foi alterado em outra aba e não foi modificado.`, { duration: TOAST_CONFIRM_DURATION });
+                        showToast(`${name} was changed in another tab and was not modified.`, { duration: TOAST_CONFIRM_DURATION });
                     } else {
                         showToast(
-                            `${name} foi alterado em outra aba e não foi modificado. Ainda há ${pluralize(undoStack.length, 'alteração', 'alterações')} para desfazer.`,
+                            `${name} was changed in another tab and was not modified. There ${undoStack.length === 1 ? 'is' : 'are'} still ${pluralize(undoStack.length, 'change', 'changes')} to undo.`,
                             { undoable: true }
                         );
                     }
@@ -1042,9 +1046,9 @@
                 }
             }
 
-            // Restaura exatamente o estado anterior à ação (idempotente na
-            // retentativa: se o cache já está restaurado, não muda nada e só
-            // tenta gravar de novo).
+            // Restores exactly the state prior to the action (idempotent on
+            // retry: if the cache is already restored, nothing changes and it
+            // just tries to write again).
             if (previousState) {
                 inv[name] = true;
             } else {
@@ -1054,44 +1058,46 @@
             const saved = persistInventory(inv);
             render();
 
-            // O card restaurado pode não estar na tela se um filtro ou o modo
-            // de exibição o esconde — a mensagem deixa isso explícito.
-            const hiddenNote = isFishCardVisible(name) ? '' : ' Ele está oculto pelos filtros ativos.';
+            // The restored card may not be on screen if a filter or the view
+            // mode hides it — the message makes that explicit.
+            const hiddenNote = isFishCardVisible(name) ? '' : ' It is hidden by the active filters.';
 
             if (!saved) {
-                // Nada foi salvo: a ação volta para a pilha e continua desfazível.
-                // A reversão em memória JÁ aconteceu (persistInventory atualiza o
-                // cache mesmo quando a gravação falha), por isso a mensagem diz o
-                // que a tela mostra: o peixe foi restaurado, mas ao recarregar
-                // volta ao estado do storage — o oposto do restaurado, porque só
-                // entra na pilha a ação original que foi salva com sucesso.
-                // retryPending evita o falso-positivo de "alteração externa" no
-                // próximo clique: o cache já está em previousState por causa da
-                // restauração em memória, então a retentativa precisa pular a
-                // guarda e só tentar gravar de novo.
-                const estadoAoRecarregar = previousState ? 'faltante' : 'capturado';
+                // Nothing was saved: the action goes back on the stack and stays
+                // undoable. The in-memory reversal has ALREADY happened
+                // (persistInventory updates the cache even when the write
+                // fails), which is why the message says what the screen shows:
+                // the fish was restored, but on reload it returns to the storage
+                // state — the opposite of the restored one, because only the
+                // original action that was saved successfully enters the stack.
+                // retryPending avoids the "external change" false positive on
+                // the next click: the cache is already at previousState because
+                // of the in-memory restoration, so the retry needs to skip the
+                // guard and just try to write again.
+                const stateOnReload = previousState ? 'missing' : 'collected';
                 undoStack.push({ name, previousState, retryPending: true });
                 showToast(
-                    `Não foi possível salvar: ${name} foi restaurado na tela, mas ao recarregar a página ele volta a ficar ${estadoAoRecarregar}.${hiddenNote}`,
+                    `Could not save: ${name} was restored on screen, but on page reload it will go back to ${stateOnReload}.${hiddenNote}`,
                     { undoable: true }
                 );
                 return;
             }
 
             if (undoStack.length === 0) {
-                showToast(`${name} restaurado.${hiddenNote}`, { duration: TOAST_CONFIRM_DURATION });
+                showToast(`${name} restored.${hiddenNote}`, { duration: TOAST_CONFIRM_DURATION });
                 return;
             }
 
             showToast(
-                `${name} restaurado.${hiddenNote} Ainda há ${pluralize(undoStack.length, 'alteração', 'alterações')} para desfazer.`,
+                `${name} restored.${hiddenNote} There ${undoStack.length === 1 ? 'is' : 'are'} still ${pluralize(undoStack.length, 'change', 'changes')} to undo.`,
                 { undoable: true }
             );
         });
 
         function toggleFish(name) {
-            // Parte da base fresca (não só do cache) para não apagar alterações
-            // gravadas por outra aba entre o último 'storage' e este clique.
+            // Starts from the fresh base (not just the cache) so as not to erase
+            // changes written by another tab between the last 'storage' event
+            // and this click.
             const inv = getBaseInventoryForWrite();
             const previousState = !!inv[name];
             const newState = !previousState;
@@ -1102,8 +1108,9 @@
                 delete inv[name];
             }
 
-            // A alteração vale em memória antes de qualquer coisa: se a gravação
-            // falhar, o card continua marcado e a mensagem não mente sobre o estado.
+            // The change takes effect in memory before anything else: if the
+            // write fails, the card stays checked and the message does not lie
+            // about the state.
             const saved = persistInventory(inv);
 
             render();
@@ -1112,42 +1119,43 @@
                 pushUndo({ name, previousState });
 
                 const pending = undoStack.length > 1
-                    ? ` ${pluralize(undoStack.length, 'alteração', 'alterações')} para desfazer.`
+                    ? ` ${pluralize(undoStack.length, 'change', 'changes')} to undo.`
                     : '';
 
                 showToast(
-                    `${name} marcado como ${newState ? 'capturado' : 'faltante'}.${pending}`,
+                    `${name} marked as ${newState ? 'collected' : 'missing'}.${pending}`,
                     { undoable: true }
                 );
             } else {
-                // A pilha não é limpa: ações anteriores que foram salvas com
-                // sucesso continuam desfazíveis enquanto o toast estiver aberto
-                // (por isso o toast é undoable se houver algo na pilha). A ação
-                // que acabou de falhar não entra na pilha: desfazê-la exigiria
-                // gravar de novo, e o armazenamento acabou de recusar. Quando
-                // há ações anteriores, o texto deixa explícito que o botão
-                // Desfazer se refere a elas — e não à marcação que acabou de
-                // falhar — para não criar a expectativa errada.
+                // The stack is not cleared: previous actions that were saved
+                // successfully stay undoable while the toast is open (which is
+                // why the toast is undoable if there is anything on the stack).
+                // The action that just failed does not enter the stack: undoing
+                // it would require writing again, and the storage just refused.
+                // When there are previous actions, the text makes explicit that
+                // the Undo button refers to them — not to the checkmark that
+                // just failed — so as not to create the wrong expectation.
                 const priorNote = undoStack.length > 0
-                    ? ` O botão Desfazer reverte ${pluralize(undoStack.length, 'alteração anterior salva', 'alterações anteriores salvas')}.`
+                    ? ` The Undo button reverts ${pluralize(undoStack.length, 'previous saved change', 'previous saved changes')}.`
                     : '';
                 showToast(
-                    `${name} ${newState ? 'marcado' : 'desmarcado'}, mas não foi possível salvar: a alteração será perdida ao recarregar a página.${priorNote}`,
+                    `${name} ${newState ? 'marked' : 'unmarked'}, but it could not be saved: the change will be lost on page reload.${priorNote}`,
                     { undoable: undoStack.length > 0 }
                 );
             }
         }
 
-        // 6 & 10. Criação Segura e Acessível dos Cards via DOM
+        // 6 & 10. Safe and Accessible Card Creation via DOM
         function fishSlug(name) {
             return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         }
 
-        // O nome acessível do card vem do próprio título visível (aria-labelledby) e
-        // o estado, do aria-checked do role="checkbox". Antes havia um aria-label
-        // que repetia "capturado/faltante" — o leitor de tela anunciava o estado
-        // duas vezes — e ainda engolia o conteúdo dos filhos. O chum passa a ser
-        // descrição (aria-describedby), então o texto continua alcançável.
+        // The card's accessible name comes from its own visible title
+        // (aria-labelledby) and the state, from the role="checkbox" aria-checked.
+        // There used to be an aria-label that repeated "collected/missing" — the
+        // screen reader announced the state twice — and it also swallowed the
+        // children's content. The chum becomes the description
+        // (aria-describedby), so the text remains reachable.
         function updateFishCard(card, fish, isCollected) {
             const slug = fishSlug(fish.name);
 
@@ -1162,7 +1170,7 @@
             const card = document.createElement('button');
             card.type = 'button';
             card.className = 'fish-card';
-            // Identificador estável: permite reaproveitar o card e devolver o foco.
+            // Stable identifier: allows reusing the card and returning focus.
             card.dataset.fishName = fish.name;
             card.setAttribute('role', 'checkbox');
             updateFishCard(card, fish, isCollected);
@@ -1188,8 +1196,8 @@
             const chum = document.createElement('div');
             chum.className = 'fish-meta';
             chum.id = `fish-chum-${slug}`;
-            // O CSS já quebra o texto em até duas linhas; o title cobre o caso de
-            // ainda assim não caber por inteiro.
+            // The CSS already wraps the text onto up to two lines; the title
+            // covers the case of it still not fitting as a whole.
             chum.title = chumText;
 
             const chumLabel = document.createElement('strong');
@@ -1204,31 +1212,31 @@
             return card;
         }
 
-        // Configuração de Chips Interativos
-        // Grupos de escolha única ("Exibição") usam a semântica de radiogroup:
-        // aria-checked e tabindex "móvel", com as setas percorrendo as opções.
-        // Grupos alternáveis (Isca, Estação) usam aria-pressed.
+        // Interactive Chip Setup
+        // Single-choice groups ("View") use the radiogroup semantics: aria-checked
+        // and "roving" tabindex, with the arrows moving through the options.
+        // Toggle groups (Bait, Season) use aria-pressed.
         function isRadioGroup(container) {
             return container.getAttribute('role') === 'radiogroup';
         }
 
-        // A classe `active` é a fonte da verdade visual; o atributo ARIA
-        // correspondente acompanha a classe para expor a seleção às tecnologias
-        // assistivas.
+        // The `active` class is the source of visual truth; the corresponding ARIA
+        // attribute follows the class to expose the selection to assistive
+        // technologies.
         function applyStateToChips(container, stateKey) {
             const radio = isRadioGroup(container);
             const value = state[stateKey];
 
             container.querySelectorAll('.chip').forEach(chip => {
-                // Só o grupo "Exibição" tem um chip "Todos" que representa a
-                // ausência de filtro; nos outros grupos, ausência de valor significa
-                // nenhum chip ativo.
+                // Only the "View" group has an "All" chip that represents the
+                // absence of a filter; in the other groups, an empty value means
+                // no chip is active.
                 const isActive = value ? chip.dataset.val === value : chip.dataset.val === 'all';
                 chip.classList.toggle('active', isActive);
 
                 if (radio) {
                     chip.setAttribute('aria-checked', isActive ? 'true' : 'false');
-                    // Apenas a opção escolhida entra na ordem de tabulação.
+                    // Only the chosen option enters the tab order.
                     chip.tabIndex = isActive ? 0 : -1;
                 } else {
                     chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
@@ -1238,7 +1246,8 @@
 
         function selectChip(container, chip, stateKey, toggleable) {
             if (toggleable && chip.classList.contains('active')) {
-                // Clicar no item já ativo do grupo alternável limpa o filtro.
+                // Clicking the already-active item of a toggle group clears the
+                // filter.
                 state[stateKey] = '';
             } else {
                 state[stateKey] = chip.dataset.val;
@@ -1260,8 +1269,8 @@
 
             if (!isRadioGroup(container)) return;
 
-            // Padrão WAI-ARIA de radiogroup: as setas movem o foco E mudam a
-            // seleção; Home/End vão para as pontas; a navegação dá a volta.
+            // WAI-ARIA radiogroup pattern: the arrows move focus AND change the
+            // selection; Home/End go to the ends; navigation wraps around.
             container.addEventListener('keydown', (e) => {
                 const chips = [...container.querySelectorAll('.chip')];
                 const currentIndex = chips.indexOf(document.activeElement);
@@ -1301,13 +1310,13 @@
         setupChips(baitChipsEl, 'bait', true);
         setupChips(seasonChipsEl, 'season', true);
 
-        // Reordena as duas grades em uma única passada, sem descartar os nós.
-        // Um peixe que passa de "Faltante" para "Capturado" precisa sair de uma
-        // grade e entrar na outra: se a grade de origem o apagasse antes disso, o nó
-        // sairia do documento no meio do caminho (e o foco do teclado se perderia
-        // junto). Por isso a limpeza remove apenas o que não pertence a NENHUMA das
-        // grades, e a relocação acontece por um insertBefore direto na grade de
-        // destino.
+        // Reorders the two grids in a single pass, without discarding nodes.
+        // A fish that moves from "Missing" to "Collected" needs to leave one grid
+        // and enter the other: if the source grid removed it before that, the node
+        // would leave the document midway (and keyboard focus would be lost
+        // along with it). That is why the cleanup removes only what does not
+        // belong to EITHER grid, and the relocation happens via a direct
+        // insertBefore on the destination grid.
         function syncGrids(groups) {
             const keepAlive = new Set();
             groups.forEach(({ cards }) => cards.forEach(card => keepAlive.add(card)));
@@ -1328,9 +1337,9 @@
             });
         }
 
-        // Devolve o foco ao card do peixe que estava focado. Se ele saiu do resultado
-        // (mudou de seção oculta pelo filtro ou deixou de passar nos filtros), o foco
-        // vai para o próximo item disponível na ordem exibida.
+        // Returns focus to the fish card that was focused. If it left the results
+        // (moved to a section hidden by the filter or stopped passing the
+        // filters), focus goes to the next available item in the displayed order.
         function restoreCardFocus(previousName, renderedCards, filtered) {
             if (!previousName) return;
 
@@ -1344,11 +1353,12 @@
 
             const startIndex = filtered.findIndex(f => f.name === previousName);
 
-            // startIndex === -1 significa que o peixe focado deixou de passar nos
-            // filtros: quem mudou o filtro foi a pessoa, não o card. Não existe
-            // "próximo item" natural nessa situação, e saltar para o primeiro peixe
-            // da lista seria um salto arbitrário — então o foco simplesmente não é
-            // realocado (quem agiu por teclado está no chip que acabou de ativar).
+            // startIndex === -1 means the focused fish stopped passing the
+            // filters: the one who changed the filter was the person, not the
+            // card. There is no natural "next item" in this situation, and
+            // jumping to the first fish on the list would be an arbitrary jump —
+            // so focus is simply not reallocated (whoever acted by keyboard is on
+            // the chip they just activated).
             if (startIndex === -1) return;
 
             let next = null;
@@ -1359,7 +1369,7 @@
                 next = renderedCards.get(filtered[i].name) || null;
             }
 
-            // preventScroll também aqui: trocar de item não pode arrastar a tela.
+            // preventScroll here too: switching items must not drag the screen.
             if (next) {
                 next.focus({ preventScroll: true });
                 return;
@@ -1371,7 +1381,7 @@
             }
         }
 
-        // 2 & 3. Renderização com Separação Clara de Progresso Total e Local
+        // 2 & 3. Rendering with a Clear Split Between Total and Local Progress
         function render() {
             const inventory = getInventory();
             const totalFishCount = fishDatabase.length;
@@ -1383,12 +1393,12 @@
             const collectedContainer = document.getElementById('collectedContainer');
             const emptyState = document.getElementById('emptyState');
 
-            // Busca textual: casa com o nome do peixe ou com qualquer um dos chums
-            // exigidos, para achar tanto "Whale Shark" quanto "chicken".
-            // A comparação é por palavras: cada termo digitado precisa aparecer em
-            // algum lugar de "nome + chums", em qualquer ordem. Assim "mushroom",
-            // "wild mushroom" e "mushroom wild" são equivalentes e acham o Tuna
-            // (chum oficial "Wild Mushroom").
+            // Text search: matches the fish's name or any of the required chums,
+            // to find both "Whale Shark" and "chicken". The comparison is by
+            // words: each typed term needs to appear somewhere in "name + chums",
+            // in any order. That way "mushroom", "wild mushroom" and "mushroom
+            // wild" are equivalent and find the Tuna (official chum "Wild
+            // Mushroom").
             const query = searchQuery.trim().toLowerCase();
             const queryTokens = query.split(/\s+/).filter(Boolean);
             const matchesQuery = (fish) => {
@@ -1403,14 +1413,14 @@
                 return matchBait && matchSeason && matchesQuery(f);
             });
 
-            // Guarda quem tinha o foco antes de mexer no DOM, para devolvê-lo depois.
+            // Stores who had focus before touching the DOM, to give it back later.
             const activeElement = document.activeElement;
             const focusedFishName = activeElement && activeElement.classList
                 && activeElement.classList.contains('fish-card')
                 ? activeElement.dataset.fishName
                 : null;
 
-            // Reaproveita os cards já montados, indexados pelo nome do peixe.
+            // Reuses the cards already built, indexed by the fish's name.
             const cardPool = new Map();
             [missingGrid, collectedGrid].forEach(grid => {
                 Array.from(grid.children).forEach(card => {
@@ -1433,7 +1443,7 @@
                     filteredCollectedCount++;
                 }
 
-                // O modo de exibição pode ocultar o card, mas ele continua contando.
+                // The view mode can hide the card, but it still counts.
                 const isVisible = isCollected ? state.view !== 'missing' : state.view !== 'collected';
                 if (!isVisible) return;
 
@@ -1455,7 +1465,7 @@
                 renderedCards.set(fish.name, card);
             });
 
-            // Cards que saíram do resultado deixam o documento.
+            // Cards that left the results leave the document.
             cardPool.forEach(card => card.remove());
 
             syncGrids([
@@ -1466,15 +1476,15 @@
             const hasVisibleItems = desiredMissing.length > 0 || desiredCollected.length > 0;
 
             const emptyMessage = query
-                ? `Nenhum peixe encontrado para "${searchQuery.trim()}".`
-                : 'Nenhum peixe encontrado com os filtros selecionados.';
+                ? `No fish found for "${searchQuery.trim()}".`
+                : 'No fish found with the selected filters.';
             if (emptyState.textContent !== emptyMessage) emptyState.textContent = emptyMessage;
 
             emptyState.classList.toggle('hidden', hasVisibleItems);
             missingContainer.classList.toggle('hidden', desiredMissing.length === 0);
             collectedContainer.classList.toggle('hidden', desiredCollected.length === 0);
 
-            // Atualiza barra e contadores
+            // Updates the bar and the counters
             updateProgressDisplays(globalCollectedCount, totalFishCount, filteredCollectedCount, filtered.length);
 
             restoreCardFocus(focusedFishName, renderedCards, filtered);
@@ -1482,44 +1492,45 @@
 
         function updateProgressDisplays(globalCollected, globalTotal, filterCollected, filterTotal) {
             const globalPct = globalTotal === 0 ? 0 : Math.round((globalCollected / globalTotal) * 100);
-            
+
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
-            
+
             progressFill.style.width = `${globalPct}%`;
             progressBar.setAttribute('aria-valuenow', globalPct);
             document.getElementById('globalProgressCount').textContent = `${globalCollected}/${globalTotal} (${globalPct}%)`;
 
-            // Indicador de filtros ativos
+            // Active filters indicator
             const activeFilters = [];
-            if (state.bait) activeFilters.push(`Isca: ${state.bait}`);
-            if (state.season) activeFilters.push(`Estação: ${state.season}`);
-            if (state.view !== 'all') activeFilters.push(`Modo: ${state.view === 'missing' ? 'Faltantes' : 'Capturados'}`);
-            if (searchQuery.trim()) activeFilters.push(`Busca: "${searchQuery.trim()}"`);
+            if (state.bait) activeFilters.push(`Bait: ${state.bait}`);
+            if (state.season) activeFilters.push(`Season: ${state.season}`);
+            if (state.view !== 'all') activeFilters.push(`Mode: ${state.view === 'missing' ? 'Missing' : 'Collected'}`);
+            if (searchQuery.trim()) activeFilters.push(`Search: "${searchQuery.trim()}"`);
 
-            const filterLabelText = activeFilters.length > 0 ? activeFilters.join(' • ') : 'Nenhum filtro aplicado';
+            const filterLabelText = activeFilters.length > 0 ? activeFilters.join(' • ') : 'No filter applied';
             document.getElementById('filterProgressLabel').textContent = filterLabelText;
 
             const filteredMissing = filterTotal - filterCollected;
             const filterProgressCount = document.getElementById('filterProgressCount');
 
             if (state.view === 'missing') {
-                filterProgressCount.textContent = `Neste filtro: ${pluralize(filteredMissing, 'faltante', 'faltantes')}`;
+                filterProgressCount.textContent = `In this filter: ${pluralize(filteredMissing, 'missing', 'missing')}`;
             } else if (state.view === 'collected') {
-                filterProgressCount.textContent = `Neste filtro: ${pluralize(filterCollected, 'capturado', 'capturados')}`;
+                filterProgressCount.textContent = `In this filter: ${pluralize(filterCollected, 'collected', 'collected')}`;
             } else {
-                filterProgressCount.textContent = `Neste filtro: ${filterCollected}/${filterTotal} ${filterCollected === 1 ? 'capturado' : 'capturados'}`;
+                filterProgressCount.textContent = `In this filter: ${filterCollected}/${filterTotal} ${filterCollected === 1 ? 'collected' : 'collected'}`;
             }
         }
 
-        // 11. Sincronização entre abas: uma alteração feita em outra aba precisa
-        // refletir nos cards e nos contadores sem exigir interação local ou recarga.
-        // O inventário não é o único estado compartilhado — tema e filtros também
-        // vivem no localStorage e ficariam dessincronizados se só o inventário fosse
-        // observado.
+        // 11. Cross-tab sync: a change made in another tab needs to reflect on the
+        // cards and counters without requiring local interaction or a reload. The
+        // inventory is not the only shared state — theme and filters also live in
+        // localStorage and would fall out of sync if only the inventory were
+        // observed.
         window.addEventListener('storage', (event) => {
-            // event.key === null indica localStorage.clear() em outra aba: tema e
-            // filtros foram apagados junto, então tudo é relido.
+            // event.key === null indicates localStorage.clear() in another tab:
+            // theme and filters were erased along with it, so everything is
+            // re-read.
             if (event.key === null) {
                 if (!hasUnsavedInventory) inventoryCache = readInventoryFromStorage();
                 applyCurrentThemePreference();
@@ -1530,18 +1541,18 @@
 
             if (event.key === STORAGE_KEY) {
                 if (hasUnsavedInventory) {
-                    // A gravação local falhou antes (cota, por exemplo). Em vez de
-                    // recusar atualizações externas para sempre ou sobrescrevê-las
-                    // com o estado local, tenta gravar de novo agora unindo os dois
-                    // inventários: como um peixe só existe como `true` ou ausente,
-                    // a união preserva tanto as marcas feitas aqui quanto as feitas
-                    // na aba que acabou de gravar. Limitação conhecida: a união não
-                    // preserva remoções — se a outra aba desmarcou um peixe (ou
-                    // redefiniu a coleção) enquanto havia gravação pendente aqui,
-                    // a união o remarca; sem timestamps por peixe no storage não há
-                    // como decidir melhor, e a heurística favorece nunca perder
-                    // progresso. Se a gravação ainda assim falhar, o estado local
-                    // prevalece.
+                    // The local write failed before (quota, for instance). Instead
+                    // of refusing external updates forever or overwriting them
+                    // with the local state, it tries to write again now, merging
+                    // the two inventories: since a fish only exists as `true` or
+                    // absent, the union preserves both the marks made here and
+                    // those made in the tab that just wrote. Known limitation:
+                    // the union does not preserve removals — if the other tab
+                    // unchecked a fish (or reset the collection) while there was
+                    // a pending write here, the union re-checks it; without
+                    // per-fish timestamps in storage there is no better way to
+                    // decide, and the heuristic favors never losing progress. If
+                    // the write still fails, the local state prevails.
                     const external = readInventoryFromStorage();
                     const merged = { ...(inventoryCache || {}), ...external };
                     if (!persistInventory(merged)) return;
@@ -1563,7 +1574,7 @@
             }
         });
 
-        // 12. Busca textual instantânea (por peixe ou por chum)
+        // 12. Instant text search (by fish or by chum)
         const searchInput = document.getElementById('searchInput');
         const searchClear = document.getElementById('searchClear');
 
@@ -1589,7 +1600,7 @@
             searchInput.focus();
         });
 
-        // 13. Backup: exportar, importar e redefinir a coleção
+        // 13. Backup: export, import and reset the collection
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
         const resetBtn = document.getElementById('resetBtn');
@@ -1610,7 +1621,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `pesca-progresso-${new Date().toISOString().slice(0, 10)}.json`;
+            link.download = `fishing-progress-${new Date().toISOString().slice(0, 10)}.json`;
 
             document.body.appendChild(link);
             link.click();
@@ -1619,17 +1630,18 @@
 
             const count = Object.keys(inv).length;
             showToast(
-                `${pluralize(count, 'peixe exportado', 'peixes exportados')}.`,
+                `${pluralize(count, 'fish exported', 'fish exported')}.`,
                 { duration: TOAST_CONFIRM_DURATION }
             );
         }
 
-        // Aceita tanto o pacote gerado por este app quanto um mapa simples
-        // { "Anchovy": true }: o sanitizeInventory descarta o que não for peixe válido.
+        // Accepts both the package generated by this app and a plain map
+        // { "Anchovy": true }: the sanitizeInventory discards anything that is not
+        // a valid fish.
         function extractInventory(parsed) {
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                // Array.isArray também aqui: um array passaria pelo typeof 'object'
-                // e o sanitizeInventory o descartaria por inteiro.
+                // Array.isArray here too: an array would pass the typeof 'object'
+                // check and sanitizeInventory would discard it entirely.
                 if (parsed.collected && typeof parsed.collected === 'object' && !Array.isArray(parsed.collected)) {
                     return parsed.collected;
                 }
@@ -1658,7 +1670,7 @@
                     try {
                         parsed = JSON.parse(text);
                     } catch {
-                        showToast('Arquivo inválido: o conteúdo não é um JSON.', { duration: TOAST_CONFIRM_DURATION });
+                        showToast('Invalid file: the content is not JSON.', { duration: TOAST_CONFIRM_DURATION });
                         return;
                     }
 
@@ -1667,41 +1679,42 @@
                     const count = Object.keys(clean).length;
 
                     if (count === 0) {
-                        // Um backup exportado com collected: {} é uma coleção
-                        // vazia válida e precisa poder ser restaurado (zerar a
-                        // coleção). Sem isso, só seria possível esvaziar via
-                        // "Redefinir". Distingue do arquivo inválido: só aceita
-                        // zero quando o envelope collected/inventory existe e
-                        // está vazio; mapa cru vazio ou só com peixes inválidos
-                        // continua rejeitado.
+                        // A backup exported with collected: {} is a valid empty
+                        // collection and must be restorable (zeroing the
+                        // collection). Without this, it would only be possible to
+                        // empty it via "Reset". Distinguished from an invalid
+                        // file: zero is only accepted when the
+                        // collected/inventory envelope exists and is empty; a
+                        // bare empty map or one with only invalid fish stays
+                        // rejected.
                         const rawIsEmpty = raw && typeof raw === 'object' && !Array.isArray(raw)
                             && Object.keys(raw).length === 0;
                         const hasEnvelope = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
                             && ((parsed.collected && typeof parsed.collected === 'object' && !Array.isArray(parsed.collected))
                                 || (parsed.inventory && typeof parsed.inventory === 'object' && !Array.isArray(parsed.inventory)));
                         if (!(rawIsEmpty && hasEnvelope)) {
-                            showToast('Nenhum peixe reconhecido no arquivo.', { duration: TOAST_CONFIRM_DURATION });
+                            showToast('No fish recognized in the file.', { duration: TOAST_CONFIRM_DURATION });
                             return;
                         }
                     }
 
                     const question = count === 0
-                        ? 'Importar coleção vazia? A coleção atual será substituída e ficará sem peixes capturados.'
-                        : `Importar ${pluralize(count, 'peixe capturado', 'peixes capturados')}? `
-                            + 'A coleção atual será substituída.';
+                        ? 'Import an empty collection? The current collection will be replaced and will have no fish collected.'
+                        : `Import ${pluralize(count, 'collected fish', 'collected fish')}? `
+                            + 'The current collection will be replaced.';
                     if (!window.confirm(question)) return;
 
                     const saved = persistInventory(clean);
                     render();
                     showToast(
                         saved
-                            ? (count === 0 ? 'Coleção vazia importada.' : `${pluralize(count, 'peixe importado', 'peixes importados')}.`)
-                            : 'Importação aplicada, mas não foi possível salvar: a alteração será perdida ao recarregar a página.',
+                            ? (count === 0 ? 'Empty collection imported.' : `${pluralize(count, 'fish imported', 'fish imported')}.`)
+                            : 'Import applied, but it could not be saved: the change will be lost on page reload.',
                         { duration: TOAST_CONFIRM_DURATION }
                     );
                 })
                 .catch(() => {
-                    showToast('Não foi possível ler o arquivo selecionado.', { duration: TOAST_CONFIRM_DURATION });
+                    showToast('The selected file could not be read.', { duration: TOAST_CONFIRM_DURATION });
                 });
         }
 
@@ -1711,25 +1724,25 @@
 
         importInput.addEventListener('change', () => {
             const file = importInput.files && importInput.files[0];
-            // Zera o valor para que escolher o mesmo arquivo de novo dispare change.
+            // Clears the value so choosing the same file again fires change.
             importInput.value = '';
             if (file) importInventoryFile(file);
         });
 
         resetBtn.addEventListener('click', () => {
-            if (!window.confirm('Redefinir a coleção? Todo o progresso salvo será apagado.')) return;
+            if (!window.confirm('Reset the collection? All saved progress will be erased.')) return;
 
             const saved = persistInventory({});
             render();
             showToast(
                 saved
-                    ? 'Coleção redefinida.'
-                    : 'Coleção limpa nesta aba, mas não foi possível salvar: a alteração será perdida ao recarregar a página.',
+                    ? 'Collection reset.'
+                    : 'Collection cleared in this tab, but it could not be saved: the change will be lost on page reload.',
                 { duration: TOAST_CONFIRM_DURATION }
             );
         });
 
-        // Inicialização
+        // Initialization
         applyCurrentThemePreference();
         render();
     </script>
