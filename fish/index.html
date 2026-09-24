@@ -705,8 +705,20 @@
             { name: "Weakfish", baits: ["Redwiggler"], chums: ["Artichoke"], seasons: ["Spring"] }
         ];
 
+        // The database is static: the caches derived from it below (valid
+        // names, slug indexes) are built once, so mutating it later — even by
+        // accident from the console — would silently desync them. Freezing the
+        // entries and the array turns any such attempt into a loud failure.
+        fishDatabase.forEach(fish => Object.freeze(fish));
+        Object.freeze(fishDatabase);
+
         // Cache of the valid names to avoid rebuilding on every getInventory() call
         const validFishNames = new Set(fishDatabase.map(f => f.name));
+
+        // Position of each fish in the database. fishSlug() appends it to the
+        // generated ids so that two distinct names that slugify to the same
+        // text ("A-B" and "A B" both become "a-b") cannot collide in the DOM.
+        const fishIndexByName = new Map(fishDatabase.map((fish, index) => [fish.name, index]));
 
         // 1 & 4. Storage Helpers with Fallback, Validation and Sanitization
         function safeGetJSON(key, fallback) {
@@ -761,9 +773,14 @@
             return { ...inventoryCache };
         }
 
+        // Sanitizes before writing: every internal caller already passes clean
+        // data, but this is the single gateway to storage — anything that
+        // reaches here (e.g. from the console) is validated on the way in,
+        // not only on the next read. The cache keeps the same invariant.
         function persistInventory(inv) {
-            const saved = safeSetJSON(STORAGE_KEY, inv);
-            inventoryCache = { ...inv };
+            const clean = sanitizeInventory(inv);
+            const saved = safeSetJSON(STORAGE_KEY, clean);
+            inventoryCache = clean;
             hasUnsavedInventory = !saved;
             return saved;
         }
@@ -954,9 +971,13 @@
                 toastExitTimeout = null;
             }
 
+            // Unconditional: closeToast() also applies inert to a toast that
+            // is still in the document (mid-exit), and re-opening it has to
+            // undo that, not only the initial [hidden] state.
+            toastEl.removeAttribute('inert');
+
             if (toastEl.hidden) {
                 toastEl.hidden = false;
-                toastEl.removeAttribute('inert');
                 void toastEl.offsetWidth; // forces the reflow so the enter transition runs
             }
 
@@ -964,16 +985,20 @@
         }
 
         // The exit respects the end of the animation: only then is the toast
-        // actually hidden.
+        // actually hidden. inert goes on right away — during those 300ms of
+        // exit animation the toast is still in the document and, without it,
+        // the button would remain reachable by Tab. In browsers without
+        // support for inert this is a no-op: what keeps the closed toast out
+        // of the tab order everywhere is [hidden] + display:none !important.
         function closeToast() {
             toastEl.classList.remove('visible');
+            toastEl.setAttribute('inert', '');
 
             if (toastExitTimeout) clearTimeout(toastExitTimeout);
             toastExitTimeout = setTimeout(() => {
                 toastExitTimeout = null;
                 if (!toastEl.classList.contains('visible')) {
                     toastEl.hidden = true;
-                    toastEl.setAttribute('inert', '');
                 }
             }, TOAST_EXIT_MS);
         }
@@ -1161,8 +1186,13 @@
         }
 
         // 6 & 10. Safe and Accessible Card Creation via DOM
+        // The database index at the end guarantees uniqueness: without it,
+        // "A-B" and "A B" would both slugify to "a-b" and the cards would end
+        // up with duplicate ids, breaking aria-labelledby/aria-describedby.
         function fishSlug(name) {
-            return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const index = fishIndexByName.get(name);
+            return index === undefined ? base : `${base}-${index}`;
         }
 
         // The card's accessible name comes from its own visible title
@@ -1409,11 +1439,12 @@
             const emptyState = document.getElementById('emptyState');
 
             // Text search: matches the fish's name or any of the required chums,
-            // to find both "Whale Shark" and "chicken". The comparison is by
-            // words: each typed term needs to appear somewhere in "name + chums",
-            // in any order. That way "mushroom", "wild mushroom" and "mushroom
-            // wild" are equivalent and find the Tuna (official chum "Wild
-            // Mushroom").
+            // to find both "Whale Shark" and "chicken". The query is split into
+            // terms; each one must appear somewhere in "name + chums", in any
+            // order, as a substring — not as a whole word. That way "mushroom",
+            // "wild mushroom" and "mushroom wild" are equivalent and find the
+            // Tuna (official chum "Wild Mushroom"), while "ray" also matches
+            // the "Moray Eel" ("ray" inside "moray").
             const query = searchQuery.trim().toLowerCase();
             const queryTokens = query.split(/\s+/).filter(Boolean);
             const matchesQuery = (fish) => {
@@ -1641,7 +1672,10 @@
             document.body.appendChild(link);
             link.click();
             link.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            // The download fetches the blob URL asynchronously after the
+            // click; on slow devices 1s was not always enough, and revoking
+            // early canceled the download before it even started.
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
 
             const count = Object.keys(inv).length;
             showToast(
