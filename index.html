@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunflower Land — Guides</title>
+    <script>
+        // Applies the theme before first paint by following the system's
+        // prefers-color-scheme — same anti-FOUC pattern as the guides, avoiding
+        // the dark flash on a light-mode OS. No saved preference is read here:
+        // each guide owns its own toggle key, and the landing has none.
+        (function () {
+            try {
+                var prefersLight = window.matchMedia
+                    && window.matchMedia('(prefers-color-scheme: light)').matches;
+                document.documentElement.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
+            } catch (err) {
+                /* matchMedia unavailable: keeps the theme declared on <html>. */
+            }
+        })();
+    </script>
     <style>
         :root {
             color-scheme: dark;
@@ -15,6 +30,19 @@
             --text-secondary: #9ca3af;
             --accent-fish: #38bdf8;
             --accent-flower: #10b981;
+        }
+
+        [data-theme="light"] {
+            color-scheme: light;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-hover: #e2e8f0;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            /* Darkened accents: the dark-theme ones sit below 4.5:1 on white. */
+            --accent-fish: #0369a1;
+            --accent-flower: #065f46;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }

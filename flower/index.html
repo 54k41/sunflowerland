@@ -42,9 +42,9 @@
             --best-bg: rgba(254, 240, 138, 0.1);
             --best-border: rgba(250, 204, 21, 0.3);
             --best-text: #fde047;
-            --best-arrow: #ca8a04;
-            --danger: #ef4444;
-            --danger-muted: rgba(239, 68, 68, 0.15);
+            --best-arrow: #eab308;
+            --danger: #f87171;
+            --danger-muted: rgba(248, 113, 113, 0.15);
             --radius-sm: 6px;
             --radius-md: 10px;
             --radius-lg: 14px;
@@ -52,9 +52,13 @@
 
         [data-theme="light"] {
             color-scheme: light;
-            --accent: #059669;
-            --accent-hover: #047857;
-            --accent-muted: rgba(5, 150, 105, 0.12);
+            /* Accent/danger deepened to pass WCAG AA (>= 4.5:1) over their own
+               muted backgrounds: the previous emerald/red failed on the active
+               chip, "Saved" indicator, "Show all", undo button and the
+               persistence warning. */
+            --accent: #065f46;
+            --accent-hover: #064e3b;
+            --accent-muted: rgba(6, 95, 70, 0.12);
             --bg-body: #f8fafc;
             --bg-surface: #ffffff;
             --bg-surface-elevated: #f1f5f9;
@@ -70,8 +74,8 @@
             --best-border: #fef08a;
             --best-text: #854d0e;
             --best-arrow: #a16207;
-            --danger: #dc2626;
-            --danger-muted: rgba(220, 38, 38, 0.1);
+            --danger: #b91c1c;
+            --danger-muted: rgba(185, 28, 28, 0.1);
         }
 
         /* =========================================
@@ -215,6 +219,34 @@
             border-color: var(--accent);
         }
 
+        /* Dedicated clear button, inside the field's right edge. Only visible
+           while there is text to clear. */
+        .search-row {
+            position: relative;
+        }
+
+        .search-row .search-bar {
+            padding-right: 34px;
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1;
+            padding: 4px 6px;
+            cursor: pointer;
+        }
+
+        .search-clear:hover {
+            color: var(--text-primary);
+        }
+
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -257,6 +289,13 @@
             border-color: var(--accent);
             color: var(--accent);
             font-weight: 600;
+        }
+
+        /* Current in-game season, shown under the season filter chips. */
+        .season-now {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
         }
 
         .toolbar-row {
@@ -667,15 +706,17 @@
         </div>
 
         <section class="controls-card" role="search" aria-label="Filter and search panel">
-            <input type="search" id="searchInput" class="search-bar" placeholder="Search by flower, seed, ingredient or family..." aria-label="Search field" />
+            <div class="search-row">
+                <input type="search" id="searchInput" class="search-bar" placeholder="Search by flower, seed, ingredient or family..." aria-label="Search field" />
+                <button type="button" id="searchClear" class="search-clear hidden" aria-label="Clear search" title="Clear search (Esc)">×</button>
+            </div>
 
             <div class="filter-group">
                 <span class="filter-label" id="seedFilterLabel">Base Seed</span>
+                <!-- Chips filled by renderFilterChips(): only the seeds of the
+                     current season (plus the year-round ones) are ever offered. -->
                 <div class="chip-row" id="seedChips" role="group" aria-labelledby="seedFilterLabel">
                     <button type="button" class="chip active" data-val="" aria-pressed="true">All</button>
-                    <button type="button" class="chip" data-val="Sunpetal Seed (1 Day)" aria-pressed="false">Sunpetal (1d)</button>
-                    <button type="button" class="chip" data-val="Bloom Seed (2 Days)" aria-pressed="false">Bloom (2d)</button>
-                    <button type="button" class="chip" data-val="Lily Seed (5 Days)" aria-pressed="false">Lily (5d)</button>
                 </div>
             </div>
 
@@ -689,8 +730,17 @@
                     <button type="button" class="chip" data-val="Daffodil" aria-pressed="false">Daffodil</button>
                     <button type="button" class="chip" data-val="Carnation" aria-pressed="false">Carnation</button>
                     <button type="button" class="chip" data-val="Lotus" aria-pressed="false">Lotus</button>
+                    <button type="button" class="chip" data-val="Gladiolus" aria-pressed="false">Gladiolus</button>
+                    <button type="button" class="chip" data-val="Edelweiss" aria-pressed="false">Edelweiss</button>
+                    <button type="button" class="chip" data-val="Lavender" aria-pressed="false">Lavender</button>
+                    <button type="button" class="chip" data-val="Clover" aria-pressed="false">Clover</button>
                     <button type="button" class="chip" data-val="Special" aria-pressed="false">Special</button>
                 </div>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label" id="seasonFilterLabel">Season</span>
+                <span id="seasonNow" class="season-now"></span>
             </div>
 
             <div class="toolbar-row">
@@ -1044,8 +1094,251 @@
                 bestTime: "14d",
                 bestSteps: ["(2d) Purple Daffodil", "(5d) Blue Carnation", "(2d) Purple Balloon Flower", "(5d) Primula Enigma"],
                 recipes: ["(2d) Purple Balloon Flower"]
+            },
+            {
+                id: "glad_red_gladiolus",
+                name: "Red Gladiolus",
+                type: "Gladiolus",
+                seed: "Gladiolus Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Yellow Edelweiss"]
+            },
+            {
+                id: "glad_yellow_gladiolus",
+                name: "Yellow Gladiolus",
+                type: "Gladiolus",
+                seed: "Gladiolus Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Pepper", "Onion", "Barley", "(3d) Yellow Gladiolus", "(3d) White Gladiolus", "(3d) Red Lavender", "(3d) Yellow Lavender", "(3d) White Lavender", "(3d) Yellow Clover"]
+            },
+            {
+                id: "glad_purple_gladiolus",
+                name: "Purple Gladiolus",
+                type: "Gladiolus",
+                seed: "Gladiolus Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Artichoke", "(3d) Red Edelweiss", "(3d) Red Gladiolus", "(3d) Purple Gladiolus", "(3d) Red Clover", "(3d) Purple Clover"]
+            },
+            {
+                id: "glad_white_gladiolus",
+                name: "White Gladiolus",
+                type: "Gladiolus",
+                seed: "Gladiolus Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) White Edelweiss", "(3d) Blue Edelweiss", "(3d) Blue Gladiolus"]
+            },
+            {
+                id: "glad_blue_gladiolus",
+                name: "Blue Gladiolus",
+                type: "Gladiolus",
+                seed: "Gladiolus Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Rhubarb", "(3d) Purple Edelweiss", "(3d) Purple Lavender", "(3d) Blue Lavender", "(3d) White Clover", "(3d) Blue Clover"]
+            },
+            {
+                id: "edel_red_edelweiss",
+                name: "Red Edelweiss",
+                type: "Edelweiss",
+                seed: "Edelweiss Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Artichoke", "Barley", "(3d) Yellow Edelweiss", "(3d) Yellow Lavender", "(3d) Purple Lavender", "(3d) Red Clover"]
+            },
+            {
+                id: "edel_yellow_edelweiss",
+                name: "Yellow Edelweiss",
+                type: "Edelweiss",
+                seed: "Edelweiss Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Onion", "(3d) Red Edelweiss", "(3d) Yellow Gladiolus", "(3d) Red Lavender", "(3d) White Lavender"]
+            },
+            {
+                id: "edel_purple_edelweiss",
+                name: "Purple Edelweiss",
+                type: "Edelweiss",
+                seed: "Edelweiss Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Rhubarb", "Pepper", "(3d) Red Gladiolus", "(3d) Purple Gladiolus", "(3d) Blue Gladiolus", "(3d) Blue Lavender", "(3d) Blue Clover"]
+            },
+            {
+                id: "edel_white_edelweiss",
+                name: "White Edelweiss",
+                type: "Edelweiss",
+                seed: "Edelweiss Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Blue Edelweiss", "(3d) Yellow Clover"]
+            },
+            {
+                id: "edel_blue_edelweiss",
+                name: "Blue Edelweiss",
+                type: "Edelweiss",
+                seed: "Edelweiss Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Purple Edelweiss", "(3d) White Edelweiss", "(3d) White Gladiolus", "(3d) Purple Clover", "(3d) White Clover"]
+            },
+            {
+                id: "lav_red_lavender",
+                name: "Red Lavender",
+                type: "Lavender",
+                seed: "Lavender Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Pepper", "Artichoke", "(3d) Red Edelweiss", "(3d) Purple Edelweiss", "(3d) Red Lavender", "(3d) Purple Lavender", "(3d) Yellow Clover"]
+            },
+            {
+                id: "lav_yellow_lavender",
+                name: "Yellow Lavender",
+                type: "Lavender",
+                seed: "Lavender Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Red Gladiolus", "(3d) Yellow Gladiolus", "(3d) White Gladiolus", "(3d) Yellow Lavender", "(3d) Red Clover"]
+            },
+            {
+                id: "lav_purple_lavender",
+                name: "Purple Lavender",
+                type: "Lavender",
+                seed: "Lavender Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Blue Lavender", "(3d) Purple Gladiolus"]
+            },
+            {
+                id: "lav_white_lavender",
+                name: "White Lavender",
+                type: "Lavender",
+                seed: "Lavender Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Rhubarb", "Onion", "Barley", "(3d) Yellow Edelweiss", "(3d) Blue Gladiolus", "(3d) White Lavender"]
+            },
+            {
+                id: "lav_blue_lavender",
+                name: "Blue Lavender",
+                type: "Lavender",
+                seed: "Lavender Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) White Edelweiss", "(3d) Blue Edelweiss", "(3d) Purple Clover", "(3d) White Clover", "(3d) Blue Clover"]
+            },
+            {
+                id: "clov_red_clover",
+                name: "Red Clover",
+                type: "Clover",
+                seed: "Clover Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Red Edelweiss", "(3d) Purple Clover"]
+            },
+            {
+                id: "clov_yellow_clover",
+                name: "Yellow Clover",
+                type: "Clover",
+                seed: "Clover Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Pepper", "Onion", "Barley", "(3d) Yellow Edelweiss", "(3d) Red Gladiolus", "(3d) Yellow Lavender", "(3d) White Lavender", "(3d) Yellow Clover"]
+            },
+            {
+                id: "clov_purple_clover",
+                name: "Purple Clover",
+                type: "Clover",
+                seed: "Clover Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Red Lavender", "(3d) Red Clover"]
+            },
+            {
+                id: "clov_white_clover",
+                name: "White Clover",
+                type: "Clover",
+                seed: "Clover Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["(3d) Blue Edelweiss", "(3d) Yellow Gladiolus", "(3d) Blue Lavender"]
+            },
+            {
+                id: "clov_blue_clover",
+                name: "Blue Clover",
+                type: "Clover",
+                seed: "Clover Seed (3 Days)",
+                bestTime: null,
+                bestSteps: [],
+                recipes: ["Rhubarb", "Artichoke", "(3d) Purple Edelweiss", "(3d) White Edelweiss", "(3d) Purple Gladiolus", "(3d) White Gladiolus", "(3d) Blue Gladiolus", "(3d) Purple Lavender", "(3d) White Clover", "(3d) Blue Clover"]
             }
         ];
+
+        /* In-game seasons: each seed above can only be planted during its season.
+           Seeds absent from this map (Sunpetal, Bloom, Lily) are year-round. */
+        const SEED_SEASON = {
+            "Gladiolus Seed (3 Days)": "Summer",
+            "Edelweiss Seed (3 Days)": "Winter",
+            "Lavender Seed (3 Days)": "Spring",
+            "Clover Seed (3 Days)": "Autumn"
+        };
+
+        /* =========================================
+           7.1 IN-GAME SEASON CALENDAR
+           ========================================= */
+        // Seasons last 7 days each and cycle continuously: Spring starts on Sep 21
+        // (2026) and after Winter (Oct 12-18) Spring begins again on Oct 19 — the
+        // 28-day cycle repeats forever from that fixed epoch ("own calendar": it
+        // drifts ~1 day per year against the Gregorian dates, which is unavoidable
+        // since a 365-day year is not a whole number of 28-day cycles).
+        const SEASON_LENGTH_DAYS = 7;
+        const SEASON_EPOCH_UTC = Date.UTC(2026, 8, 21); // fixed anchor: Sep 21, 2026
+        const SEASON_ORDER = ['Spring', 'Summer', 'Autumn', 'Winter'];
+        const SEASON_EMOJI = { Spring: '🌱', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
+        // PT-BR aliases so searching "primavera", "inverno", etc. also finds the flowers.
+        const SEASON_SEARCH_ALIASES = {
+            Spring: 'primavera',
+            Summer: 'verao verão',
+            Autumn: 'outono',
+            Winter: 'inverno'
+        };
+
+        // Season for any date, plus its position in the 28-day cycle.
+        function getSeasonInfo(date) {
+            const dayMs = 86400000;
+            const y = date.getFullYear();
+            const m = date.getMonth();
+            const d = date.getDate();
+
+            // UTC day arithmetic: exact multiples of 86400000, immune to DST, and the
+            // fixed epoch makes Math.floor correct for past and future dates alike.
+            const todayUtc = Date.UTC(y, m, d);
+            const cycleLength = SEASON_LENGTH_DAYS * SEASON_ORDER.length;
+            const cycleDay = (((todayUtc - SEASON_EPOCH_UTC) / dayMs) % cycleLength + cycleLength) % cycleLength;
+            const seasonIndex = Math.floor(cycleDay / SEASON_LENGTH_DAYS);
+            const dayOfSeason = (cycleDay % SEASON_LENGTH_DAYS) + 1;
+
+            // Day offsets go through the Date constructor, which normalizes
+            // month/year overflow without DST drift on pure date arithmetic.
+            const season = SEASON_ORDER[seasonIndex];
+            const daysLeft = SEASON_LENGTH_DAYS - dayOfSeason;
+            return {
+                season,
+                dayOfSeason,
+                daysLeft,
+                seasonStart: new Date(y, m, d - (dayOfSeason - 1)),
+                seasonEnd: new Date(y, m, d + daysLeft),
+                nextSeason: SEASON_ORDER[(seasonIndex + 1) % SEASON_ORDER.length],
+                nextSeasonStart: new Date(y, m, d + daysLeft + 1)
+            };
+        }
+
+        function formatSeasonDate(date) {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
 
         function validateAndNormalizeDatabase(rawList) {
             const seenIds = new Set();
@@ -1070,25 +1363,33 @@
 
                 // PT-BR aliases for search: the internal type "Special" used to be shown as
                 // "Especial" in the chip; without the alias, searching "especial" found nothing.
-                // The database has 33 flowers, 11 without bestTime (no optimized route data —
-                // expected behavior: the card simply omits the "Best route" button).
+                // The database has 53 flowers (20 seasonal: Gladiolus, Edelweiss, Lavender,
+                // Clover), 31 without bestTime (no optimized route data — expected behavior:
+                // the card simply omits the "Best route" button).
                 const typeAliases = type === 'Special' ? 'especial especiais' : '';
+                // Seasonal flowers are also searchable by season name (including PT-BR).
+                const season = SEED_SEASON[seed] || null;
+                const seasonAliases = season ? `${season} ${SEASON_SEARCH_ALIASES[season] || ''}` : '';
                 // Precomputes the lowercase search string
-                const searchText = `${name} ${seed} ${type} ${typeAliases} ${recipes.join(' ')} ${bestSteps.join(' ')}`.toLowerCase();
+                const searchText = `${name} ${seed} ${type} ${typeAliases} ${seasonAliases} ${recipes.join(' ')} ${bestSteps.join(' ')}`.toLowerCase();
 
-                cleanList.push({
+                // Frozen: search/recipes caches are precomputed once, so any later
+                // mutation (even accidental, from the console) would silently desync
+                // them from what the cards render.
+                cleanList.push(Object.freeze({
                     id: safeId,
                     name,
                     type,
                     seed,
+                    season,
                     bestTime,
-                    bestSteps,
-                    recipes,
+                    bestSteps: Object.freeze(bestSteps),
+                    recipes: Object.freeze(recipes),
                     searchText
-                });
+                }));
             });
 
-            return cleanList;
+            return Object.freeze(cleanList);
         }
 
         const flowerDatabase = validateAndNormalizeDatabase(rawFlowerDatabase);
@@ -1099,6 +1400,7 @@
         const STORAGE_KEY = 'flowerGuideInventory_v3';
         const LEGACY_STORAGE_KEY = 'flowerGuideInventory_v2';
         const THEME_KEY = 'flowerGuideTheme';
+        const FILTERS_KEY = 'flowerGuideFilters_v1';
 
         const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 
@@ -1404,9 +1706,14 @@
         // The 'storage' listener ignores this key (filters by STORAGE_KEY).
         const INVENTORY_LOCK_KEY = 'flowerGuideInventory_v3.lock';
 
-        function acquireInventoryLock(timeoutMs = 600) {
+        function acquireInventoryLock(timeoutMs = 25) {
             const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
             const deadline = Date.now() + timeoutMs;
+            // Bounded single attempt with a short safety budget: a lock actively
+            // held by another tab (e.g. one that died mid-save) is NOT waited for —
+            // the old code spun the CPU here and froze the UI for ~600ms per
+            // click. Giving up is safe: the caller falls back to a rev-checked
+            // best-effort write, and the commit loop retries on real conflicts.
             while (Date.now() < deadline) {
                 let current = null;
                 try {
@@ -1418,10 +1725,7 @@
                     try {
                         const parsed = JSON.parse(current);
                         if (parsed && parsed.exp && parsed.exp > Date.now() && parsed.token) {
-                            const wait = 5 + Math.random() * 12;
-                            const start = Date.now();
-                            while (Date.now() - start < wait) { /* short synchronous backoff */ }
-                            continue;
+                            return null; // actively held: refuse instead of busy-waiting
                         }
                     } catch (err) {
                         // corrupted lock: tries to take ownership below
@@ -1435,9 +1739,6 @@
                 } catch (err) {
                     return null;
                 }
-                const wait = 5 + Math.random() * 15;
-                const start = Date.now();
-                while (Date.now() - start < wait) { /* lost the race, try again */ }
             }
             return null;
         }
@@ -1482,7 +1783,7 @@
 
             // Atomic critical section across tabs: check expectedRev + write under lock.
             const useLock = options.expectedRev !== undefined;
-            const lockToken = useLock ? acquireInventoryLock(600) : null;
+            const lockToken = useLock ? acquireInventoryLock() : null;
             // A lock timeout must not block forever: release once without lock — if the rev
             // changed, it is a real conflict and the commit's retry tries again instead of
             // blindly overwriting. Without expectedRev (migration/boot) it continues
@@ -1685,6 +1986,43 @@
             searchTimer: null
             // "There are unsaved changes" is read from storageState.dirty (single source).
         };
+
+        // Restores the persisted filters (written by renderView on every render).
+        // Every field is revalidated: storage may be corrupted or hand-edited, and
+        // values from an older session may no longer exist. The seed is not checked
+        // against the season here on purpose — renderFilterChips rebuilds the seed
+        // chips right after this and silently drops one that is out of season today.
+        (function restorePersistedFilters() {
+            let saved = null;
+            try {
+                saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || 'null');
+            } catch (err) {
+                saved = null; // corrupted: defaults win
+            }
+            if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
+
+            const f = appState.filters;
+            const validSorts = new Set(['default', 'name-asc', 'name-desc', 'recipes-desc']);
+            const validSeeds = new Set(flowerDatabase.map(x => x.seed));
+            const validTypes = new Set(flowerDatabase.map(x => x.type));
+
+            if (typeof saved.seed === 'string' && validSeeds.has(saved.seed)) f.seed = saved.seed;
+            if (typeof saved.type === 'string' && validTypes.has(saved.type)) f.type = saved.type;
+            if (typeof saved.search === 'string') f.search = saved.search.toLowerCase().trim();
+            if (validSorts.has(saved.sort)) f.sort = saved.sort;
+
+            document.getElementById('searchInput').value = f.search;
+            document.getElementById('sortSelect').value = f.sort;
+            updateSearchClearVisibility();
+
+            // The type chips are static in the HTML: reflect the restored selection
+            // on them (the seed chips are rebuilt by renderFilterChips from f.seed).
+            document.querySelectorAll('#typeChips .chip').forEach(chip => {
+                const isActive = chip.dataset.val === f.type;
+                chip.classList.toggle('active', isActive);
+                chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+        })();
 
         // Returns the real write result: callers need it to avoid
         // announcing as saved something the browser refused.
@@ -1987,16 +2325,31 @@
             const badgeRow = document.createElement('div');
             badgeRow.className = 'flower-badge-row';
 
+            const seedName = flower.seed.split(' (')[0];
             const seedTag = document.createElement('span');
             seedTag.className = 'tag';
-            seedTag.textContent = flower.seed.split(' (')[0];
-
-            const typeTag = document.createElement('span');
-            typeTag.className = 'tag';
-            typeTag.textContent = flower.type;
+            seedTag.textContent = seedName;
 
             badgeRow.appendChild(seedTag);
-            badgeRow.appendChild(typeTag);
+
+            // The seasonal families share their name with the seed (e.g. seed
+            // "Edelweiss Seed", type "Edelweiss"): repeating both reads as a
+            // duplicate, so the type tag is only shown when it adds information.
+            if (flower.type !== seedName.replace(/ Seed$/, '')) {
+                const typeTag = document.createElement('span');
+                typeTag.className = 'tag';
+                typeTag.textContent = flower.type;
+                badgeRow.appendChild(typeTag);
+            }
+
+            // Season badge: only seasonal seeds have one (Sunpetal, Bloom and Lily are year-round).
+            if (flower.season) {
+                const seasonTag = document.createElement('span');
+                seasonTag.className = 'tag';
+                seasonTag.textContent = `${SEASON_EMOJI[flower.season]} ${flower.season}`;
+                badgeRow.appendChild(seasonTag);
+            }
+
             titleBox.appendChild(nameEl);
             titleBox.appendChild(badgeRow);
 
@@ -2152,10 +2505,17 @@
         function getFilteredFlowers() {
             const { seed, type, search, sort } = appState.filters;
 
+            // The grid is never hidden by season: "All" lists every flower, including
+            // out-of-season ones (they carry their season badge). The current season
+            // only restricts which seeds the selector offers (renderFilterChips).
+            // Search is token-based: every whitespace-separated term must appear,
+            // in any order ("pansy red" === "red pansy") — same behavior as fish/.
+            const searchTokens = search ? search.split(/\s+/).filter(Boolean) : [];
             let filtered = flowerDatabase.filter(flower => {
                 const matchSeed = !seed || flower.seed === seed;
                 const matchType = !type || flower.type === type;
-                const matchSearch = !search || flower.searchText.includes(search);
+                const matchSearch = searchTokens.length === 0
+                    || searchTokens.every(token => flower.searchText.includes(token));
                 return matchSeed && matchType && matchSearch;
             });
 
@@ -2259,6 +2619,13 @@
 
         // Main Orchestration Function
         function renderView() {
+            // Persists the filters (A3) before drawing; failure is non-fatal —
+            // filters are cosmetic, unlike the inventory. The cross-tab listener
+            // ignores this key, so there is no echo loop between tabs.
+            try {
+                localStorage.setItem(FILTERS_KEY, JSON.stringify(appState.filters));
+            } catch (err) { /* ignore */ }
+
             renderGlobalProgress();
 
             const filtered = getFilteredFlowers();
@@ -2299,13 +2666,96 @@
         setupChipGroup('seedChips', 'seed');
         setupChipGroup('typeChips', 'type');
 
+        // Flowers plantable today: everything from year-round seeds plus the one
+        // seasonal seed of the current in-game season. Drives the seed chip builder
+        // below — the grid itself always shows every flower; only the selector is
+        // restricted to what can be planted today.
+        function getSeasonVisibleFlowers() {
+            const currentSeason = getSeasonInfo(new Date()).season;
+            return flowerDatabase.filter(f => !f.season || f.season === currentSeason);
+        }
+
+        // "Sunpetal Seed (1 Day)" -> "Sunpetal (1d)", matching the old static chips.
+        function seedChipLabel(seed) {
+            const m = seed.match(/^([^(]+) Seed \((\d+) Days?\)$/);
+            return m ? `${m[1]} (${m[2]}d)` : seed.split(' (')[0];
+        }
+
+        // Rebuilds the seed chip row from the seeds plantable in the current season,
+        // so out-of-season seeds never appear in the selector. A selected seed that
+        // stops being offered (e.g. the season that just ended on a day rollover)
+        // falls back to "All", which shows every flower, instead of a dead filter.
+        // The container-level listener from setupChipGroup keeps working across
+        // rebuilds (event delegation).
+        function renderFilterChips() {
+            const container = document.getElementById('seedChips');
+            if (!container) return;
+
+            const values = [...new Set(getSeasonVisibleFlowers().map(f => f.seed))];
+            if (appState.filters.seed && !values.includes(appState.filters.seed)) {
+                appState.filters.seed = '';
+            }
+            const activeVal = appState.filters.seed;
+
+            const frag = document.createDocumentFragment();
+            [''].concat(values).forEach(val => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'chip' + (val === activeVal ? ' active' : '');
+                chip.dataset.val = val;
+                chip.setAttribute('aria-pressed', val === activeVal ? 'true' : 'false');
+                chip.textContent = val === '' ? 'All' : seedChipLabel(val);
+                frag.appendChild(chip);
+            });
+            container.innerHTML = '';
+            container.appendChild(frag);
+        }
+
+        // The clear button only makes sense while there is text to clear.
+        function updateSearchClearVisibility() {
+            const btn = document.getElementById('searchClear');
+            if (!btn) return;
+            btn.classList.toggle(
+                'hidden',
+                document.getElementById('searchInput').value === ''
+            );
+        }
+
         // Search with Debounce (120ms)
         document.getElementById('searchInput').addEventListener('input', (e) => {
+            updateSearchClearVisibility();
             clearTimeout(appState.searchTimer);
             appState.searchTimer = setTimeout(() => {
                 appState.filters.search = e.target.value.toLowerCase().trim();
                 renderView();
             }, 120);
+        });
+
+        // Button form of the Escape clear (see the keydown handler below).
+        document.getElementById('searchClear').addEventListener('click', () => {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            clearTimeout(appState.searchTimer);
+            appState.searchTimer = null;
+            appState.filters.search = '';
+            updateSearchClearVisibility();
+            renderView();
+            input.focus();
+        });
+
+        // Escape clears the search in one keystroke: without it, the only ways out
+        // are backspacing the whole text or "Clear filters" (which also wipes the
+        // other filters). Cancels any pending debounce so the grid is not
+        // re-filtered by the timer after the clear.
+        document.getElementById('searchInput').addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape' || e.target.value === '') return;
+            e.preventDefault();
+            e.target.value = '';
+            clearTimeout(appState.searchTimer);
+            appState.searchTimer = null;
+            appState.filters.search = '';
+            updateSearchClearVisibility();
+            renderView();
         });
 
         // Sorting
@@ -2328,6 +2778,7 @@
 
             document.getElementById('searchInput').value = '';
             document.getElementById('sortSelect').value = 'default';
+            updateSearchClearVisibility();
 
             document.querySelectorAll('.chip-row').forEach(row => {
                 row.querySelectorAll('.chip').forEach((c, idx) => {
@@ -2462,6 +2913,15 @@
         // A change made in another tab must reflect on the cards and counters
         // without requiring local interaction or a reload.
         window.addEventListener('storage', (event) => {
+            // Theme is not inventory state: it applies immediately, even when there
+            // are unsaved inventory changes, and never triggers a grid rebuild.
+            if (event.key === THEME_KEY) {
+                applyTheme(readThemePreference() || getSystemTheme());
+                return;
+            }
+            // Filters are session-local UI state (same as the fish guide): another
+            // tab's filter choices are ignored instead of clobbering this view.
+            if (event.key === FILTERS_KEY) return;
             // event.key === null indicates localStorage.clear() in another tab.
             if (event.key !== null && event.key !== STORAGE_KEY && event.key !== LEGACY_STORAGE_KEY) return;
 
@@ -2528,9 +2988,46 @@
             if (document.visibilityState === 'hidden') tryFlushPendingSaves();
         });
 
-        // Initialization
+        // Current in-game season line: what is plantable today and when the season
+        // turns. Refreshed on every day change so a page left open stays accurate.
+        function renderSeasonNow() {
+            const el = document.getElementById('seasonNow');
+            if (!el) return;
+            const info = getSeasonInfo(new Date());
+            const range = `${formatSeasonDate(info.seasonStart)} – ${formatSeasonDate(info.seasonEnd)}`;
+            const left = info.daysLeft === 0 ? 'last day' : `${info.daysLeft} day${info.daysLeft > 1 ? 's' : ''} left`;
+            el.textContent = `${SEASON_EMOJI[info.season]} ${info.season} (${range}) · ${left} · Next: ${SEASON_EMOJI[info.nextSeason]} ${info.nextSeason} on ${formatSeasonDate(info.nextSeasonStart)}`;
+        }
+
+        // The season rolls over by itself: a page left open (or asleep) overnight
+        // re-checks the in-game day every minute — and immediately on becoming
+        // visible, since timers are throttled in background tabs. A day change also
+        // rebuilds the seed selector and re-renders the grid: a selected seed whose
+        // season ended falls back to "All", which lists every flower.
+        let seasonDayKey = null;
+
+        function getLocalDayKey(date) {
+            return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+
+        function refreshSeasonOnDayChange() {
+            const key = getLocalDayKey(new Date());
+            if (key === seasonDayKey) return;
+            seasonDayKey = key;
+            renderFilterChips();
+            renderSeasonNow();
+            renderView();
+        }
+
+        setInterval(refreshSeasonOnDayChange, 60000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') refreshSeasonOnDayChange();
+        });
+
+        // Initialization (refreshSeasonOnDayChange builds the filter chips for
+        // today's season and renders the initial view).
         initTheme();
-        renderView();
+        refreshSeasonOnDayChange();
     </script>
 </body>
 </html>
