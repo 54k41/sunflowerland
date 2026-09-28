@@ -559,6 +559,17 @@
             </div>
             <button id="themeToggle" class="theme-btn" aria-label="Toggle theme">☀️</button>
         </header>
+        <script>
+            // Syncs the icon right after the header is parsed, using the theme
+            // already decided in <head>. Without this the button shows ☀️
+            // until the main script at the end of <body> runs.
+            (function () {
+                var btn = document.getElementById('themeToggle');
+                if (btn) {
+                    btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️';
+                }
+            })();
+        </script>
 
         <!-- Chip Filters -->
         <div class="filter-group">
@@ -580,6 +591,10 @@
                 <button type="button" class="chip" data-val="Grub" aria-pressed="false">Grub</button>
                 <button type="button" class="chip" data-val="Fishing Lure" aria-pressed="false">Fishing Lure</button>
                 <button type="button" class="chip" data-val="Redwiggler" aria-pressed="false">Redwiggler</button>
+                <button type="button" class="chip" data-val="Fish Flake" aria-pressed="false">Fish Flake</button>
+                <button type="button" class="chip" data-val="Fish Stick" aria-pressed="false">Fish Stick</button>
+                <button type="button" class="chip" data-val="Fish Oil" aria-pressed="false">Fish Oil</button>
+                <button type="button" class="chip" data-val="Crab Stick" aria-pressed="false">Crab Stick</button>
             </div>
         </div>
 
@@ -642,8 +657,7 @@
             <button type="button" id="exportBtn" class="link-btn">Export progress</button>
             <button type="button" id="importBtn" class="link-btn">Import</button>
             <button type="button" id="resetBtn" class="link-btn link-btn-danger">Reset collection</button>
-            <input type="file" id="importInput" class="sr-only" accept="application/json,.json"
-                   tabindex="-1" aria-hidden="true">
+            <input type="file" id="importInput" accept="application/json,.json" hidden>
         </footer>
     </div>
 
@@ -665,44 +679,44 @@
            <script>, which runs before the CSS because of the anti-FOUC. */
 
         const fishDatabase = [
-            { name: "Anchovy", baits: ["Earthworm"], chums: ["Carrot", "Egg"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
-            { name: "Butterflyfish", baits: ["Earthworm"], chums: ["Sunflower"], seasons: ["Summer", "Autumn"] },
-            { name: "Blowfish", baits: ["Earthworm"], chums: ["Yam"], seasons: ["Winter"] },
-            { name: "Clownfish", baits: ["Earthworm"], chums: ["Cabbage"], seasons: ["Summer", "Winter"] },
-            { name: "Sea Bass", baits: ["Earthworm"], chums: ["Anchovy"], seasons: ["Spring", "Autumn"] },
-            { name: "Sea Horse", baits: ["Earthworm"], chums: ["Seaweed"], seasons: ["Spring", "Summer"] },
-            { name: "Horse Mackerel", baits: ["Earthworm"], chums: ["Blueberry"], seasons: ["Summer", "Winter"] },
-            { name: "Halibut", baits: ["Earthworm"], chums: ["Anchovy"], seasons: ["Spring", "Autumn"] },
-            { name: "Squid", baits: ["Earthworm"], chums: ["Eggplant", "Onion"], seasons: ["Spring", "Winter"] },
-            { name: "Porgy", baits: ["Earthworm"], chums: ["Yam"], seasons: ["Spring"] },
-            { name: "Muskellunge", baits: ["Earthworm"], chums: ["Turnip"], seasons: ["Autumn"] },
+            { name: "Anchovy", baits: ["Earthworm", "Fish Flake"], chums: ["Carrot", "Egg"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
+            { name: "Butterflyfish", baits: ["Earthworm", "Fish Flake"], chums: ["Sunflower"], seasons: ["Summer", "Autumn"] },
+            { name: "Blowfish", baits: ["Earthworm", "Fish Flake"], chums: ["Yam"], seasons: ["Winter"] },
+            { name: "Clownfish", baits: ["Earthworm", "Fish Flake"], chums: ["Cabbage"], seasons: ["Summer", "Winter"] },
+            { name: "Sea Bass", baits: ["Earthworm", "Fish Flake"], chums: ["Anchovy"], seasons: ["Spring", "Autumn"] },
+            { name: "Sea Horse", baits: ["Earthworm", "Fish Flake"], chums: ["Seaweed"], seasons: ["Spring", "Summer"] },
+            { name: "Horse Mackerel", baits: ["Earthworm", "Fish Flake"], chums: ["Blueberry"], seasons: ["Summer", "Winter"] },
+            { name: "Halibut", baits: ["Earthworm", "Fish Flake"], chums: ["Anchovy"], seasons: ["Spring", "Autumn"] },
+            { name: "Squid", baits: ["Earthworm", "Fish Flake"], chums: ["Eggplant", "Onion"], seasons: ["Spring", "Winter"] },
+            { name: "Porgy", baits: ["Earthworm", "Fish Flake"], chums: ["Yam"], seasons: ["Spring"] },
+            { name: "Muskellunge", baits: ["Earthworm", "Fish Flake"], chums: ["Turnip"], seasons: ["Autumn"] },
             { name: "Red Snapper", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Apple", "Honey"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
-            { name: "Moray Eel", baits: ["Earthworm", "Grub", "Fishing Lure"], chums: ["Gold"], seasons: ["Summer", "Autumn"] },
-            { name: "Olive Flounder", baits: ["Earthworm", "Grub", "Fishing Lure"], chums: ["Rhubarb"], seasons: ["Spring", "Autumn"] },
-            { name: "Napoleanfish", baits: ["Grub", "Fishing Lure"], chums: ["Carrot"], seasons: ["Summer", "Autumn"] },
-            { name: "Surgeonfish", baits: ["Grub", "Fishing Lure"], chums: ["Orange"], seasons: ["Summer", "Autumn"] },
-            { name: "Angelfish", baits: ["Grub", "Fishing Lure"], chums: ["Banana"], seasons: ["Summer", "Winter"] },
-            { name: "Zebra Turkeyfish", baits: ["Grub", "Fishing Lure"], chums: ["Beetroot", "Rhubarb"], seasons: ["Spring", "Summer"] },
-            { name: "Ray", baits: ["Grub", "Fishing Lure"], chums: ["Squid"], seasons: ["Spring", "Summer"] },
-            { name: "Hammerhead Shark", baits: ["Grub", "Fishing Lure"], chums: ["Iron"], seasons: ["Summer", "Autumn"] },
-            { name: "Barred Knifejaw", baits: ["Grub", "Fishing Lure"], chums: ["Anchovy"], seasons: ["Spring", "Summer"] },
-            { name: "Walleye", baits: ["Grub"], chums: ["Broccoli"], seasons: ["Winter"] },
-            { name: "Rock Blackfish", baits: ["Grub"], chums: ["Onion"], seasons: ["Autumn"] },
-            { name: "Tilapia", baits: ["Grub"], chums: ["Zucchini"], seasons: ["Summer"] },
-            { name: "Tuna", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Orange", "Wild Mushroom"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
-            { name: "Mahi Mahi", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Corn"], seasons: ["Summer", "Autumn"] },
-            { name: "Blue Marlin", baits: ["Grub", "Redwiggler", "Fishing Lure"], chums: ["Wheat"], seasons: ["Summer", "Winter"] },
-            { name: "Oarfish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Kale"], seasons: ["Spring", "Winter"] },
-            { name: "Football Fish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Sunflower"], seasons: ["Winter"] },
-            { name: "Sunfish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Anchovy"], seasons: ["Summer", "Autumn"] },
-            { name: "Coelacanth", baits: ["Redwiggler", "Fishing Lure"], chums: ["Cabbage"], seasons: ["Spring", "Winter"] },
-            { name: "Parrotfish", baits: ["Redwiggler", "Fishing Lure"], chums: ["Seaweed"], seasons: ["Spring", "Summer"] },
-            { name: "Whale Shark", baits: ["Redwiggler", "Fishing Lure"], chums: ["Crab", "Fat Chicken"], seasons: ["Summer", "Winter"] },
-            { name: "Saw Shark", baits: ["Redwiggler", "Fishing Lure"], chums: ["Red Snapper", "Speed Chicken"], seasons: ["Spring", "Summer"] },
-            { name: "White Shark", baits: ["Redwiggler", "Fishing Lure"], chums: ["Tuna", "Rich Chicken"], seasons: ["Summer", "Winter"] },
-            { name: "Cobia", baits: ["Redwiggler"], chums: ["Broccoli"], seasons: ["Summer"] },
-            { name: "Trout", baits: ["Redwiggler"], chums: ["Pepper"], seasons: ["Winter"] },
-            { name: "Weakfish", baits: ["Redwiggler"], chums: ["Artichoke"], seasons: ["Spring"] }
+            { name: "Moray Eel", baits: ["Earthworm", "Grub", "Fishing Lure", "Fish Flake"], chums: ["Gold"], seasons: ["Summer", "Autumn"] },
+            { name: "Olive Flounder", baits: ["Earthworm", "Grub", "Fishing Lure", "Fish Flake"], chums: ["Rhubarb"], seasons: ["Spring", "Autumn"] },
+            { name: "Napoleanfish", baits: ["Grub", "Fishing Lure", "Fish Flake"], chums: ["Carrot"], seasons: ["Summer", "Autumn"] },
+            { name: "Surgeonfish", baits: ["Grub", "Fishing Lure", "Fish Flake"], chums: ["Orange"], seasons: ["Summer", "Autumn"] },
+            { name: "Angelfish", baits: ["Grub", "Fishing Lure", "Fish Flake"], chums: ["Banana"], seasons: ["Summer", "Winter"] },
+            { name: "Zebra Turkeyfish", baits: ["Grub", "Fishing Lure", "Fish Flake"], chums: ["Beetroot", "Rhubarb"], seasons: ["Spring", "Summer"] },
+            { name: "Ray", baits: ["Grub", "Fishing Lure", "Fish Flake"], chums: ["Squid"], seasons: ["Spring", "Summer"] },
+            { name: "Hammerhead Shark", baits: ["Grub", "Fishing Lure", "Fish Stick"], chums: ["Iron"], seasons: ["Summer", "Autumn"] },
+            { name: "Barred Knifejaw", baits: ["Grub", "Fishing Lure", "Fish Oil", "Crab Stick"], chums: ["Anchovy"], seasons: ["Spring", "Summer"] },
+            { name: "Walleye", baits: ["Grub", "Fish Flake"], chums: ["Broccoli"], seasons: ["Winter"] },
+            { name: "Rock Blackfish", baits: ["Grub", "Fish Stick"], chums: ["Onion"], seasons: ["Autumn"] },
+            { name: "Tilapia", baits: ["Grub", "Fish Flake"], chums: ["Zucchini"], seasons: ["Summer"] },
+            { name: "Tuna", baits: ["Grub", "Redwiggler", "Fishing Lure", "Fish Stick"], chums: ["Orange", "Wild Mushroom"], seasons: ["Spring", "Autumn", "Summer", "Winter"] },
+            { name: "Mahi Mahi", baits: ["Grub", "Redwiggler", "Fishing Lure", "Fish Stick"], chums: ["Corn"], seasons: ["Summer", "Autumn"] },
+            { name: "Blue Marlin", baits: ["Grub", "Redwiggler", "Fishing Lure", "Fish Stick"], chums: ["Wheat"], seasons: ["Summer", "Winter"] },
+            { name: "Oarfish", baits: ["Redwiggler", "Fishing Lure", "Fish Stick"], chums: ["Kale"], seasons: ["Spring", "Winter"] },
+            { name: "Football Fish", baits: ["Redwiggler", "Fishing Lure", "Fish Stick"], chums: ["Sunflower"], seasons: ["Winter"] },
+            { name: "Sunfish", baits: ["Redwiggler", "Fishing Lure", "Fish Stick"], chums: ["Anchovy"], seasons: ["Summer", "Autumn"] },
+            { name: "Coelacanth", baits: ["Redwiggler", "Fishing Lure", "Fish Oil"], chums: ["Cabbage"], seasons: ["Spring", "Winter"] },
+            { name: "Parrotfish", baits: ["Redwiggler", "Fishing Lure", "Crab Stick"], chums: ["Seaweed"], seasons: ["Spring", "Summer"] },
+            { name: "Whale Shark", baits: ["Redwiggler", "Fishing Lure", "Crab Stick"], chums: ["Crab", "Fat Chicken"], seasons: ["Summer", "Winter"] },
+            { name: "Saw Shark", baits: ["Redwiggler", "Fishing Lure", "Fish Oil"], chums: ["Red Snapper", "Speed Chicken"], seasons: ["Spring", "Summer"] },
+            { name: "White Shark", baits: ["Redwiggler", "Fishing Lure", "Crab Stick"], chums: ["Tuna", "Rich Chicken"], seasons: ["Summer", "Winter"] },
+            { name: "Cobia", baits: ["Redwiggler", "Fish Stick"], chums: ["Broccoli"], seasons: ["Summer"] },
+            { name: "Trout", baits: ["Redwiggler", "Fish Oil"], chums: ["Pepper"], seasons: ["Winter"] },
+            { name: "Weakfish", baits: ["Redwiggler", "Fish Stick"], chums: ["Artichoke"], seasons: ["Spring"] }
         ];
 
         // The database is static: the caches derived from it below (valid
@@ -938,6 +952,10 @@
         let toastTimeout = null;
         let toastExitTimeout = null;
         let announceTimeout = null;
+        // True while the visible toast is a purely informational one (export,
+        // import error) that must not end the undo window. dismissToast()
+        // consults it before clearing the stack.
+        let toastKeepUndo = false;
 
         const toastEl = document.getElementById('toast');
         const toastMsg = document.getElementById('toastMsg');
@@ -1003,14 +1021,19 @@
             }, TOAST_EXIT_MS);
         }
 
-        // Closes the notification without performing an action, cancels the
-        // pending timer and ends the undo window.
+        // Closes the notification without performing an action and cancels the
+        // pending timer. It ends the undo window, unless the visible toast is
+        // a purely informational one (toastKeepUndo), e.g. an export
+        // confirmation shown while previous toggles are still undoable.
         function dismissToast() {
             if (toastTimeout) {
                 clearTimeout(toastTimeout);
                 toastTimeout = null;
             }
-            undoStack = [];
+            if (!toastKeepUndo) {
+                undoStack = [];
+            }
+            toastKeepUndo = false;
             closeToast();
         }
 
@@ -1021,8 +1044,12 @@
 
         // `undoable: false` (the default) ends the undo window: a notification
         // that is not undoable means the person has already moved on.
-        function showToast(message, { undoable = false, duration = TOAST_DURATION } = {}) {
-            if (!undoable) undoStack = [];
+        // Exception: `keepUndo: true` for purely informational toasts (export
+        // confirmation, import errors) that do not invalidate previous
+        // changes — they leave the stack alone so pending undos survive.
+        function showToast(message, { undoable = false, duration = TOAST_DURATION, keepUndo = false } = {}) {
+            if (!undoable && !keepUndo) undoStack = [];
+            toastKeepUndo = !undoable && keepUndo;
 
             toastMsg.textContent = message;
             toastUndo.textContent = undoable
@@ -1564,7 +1591,7 @@
             } else if (state.view === 'collected') {
                 filterProgressCount.textContent = `In this filter: ${pluralize(filterCollected, 'collected', 'collected')}`;
             } else {
-                filterProgressCount.textContent = `In this filter: ${filterCollected}/${filterTotal} ${filterCollected === 1 ? 'collected' : 'collected'}`;
+                filterProgressCount.textContent = `In this filter: ${filterCollected}/${filterTotal} collected`;
             }
         }
 
@@ -1680,7 +1707,7 @@
             const count = Object.keys(inv).length;
             showToast(
                 `${pluralize(count, 'fish exported', 'fish exported')}.`,
-                { duration: TOAST_CONFIRM_DURATION }
+                { duration: TOAST_CONFIRM_DURATION, keepUndo: true }
             );
         }
 
@@ -1719,7 +1746,7 @@
                     try {
                         parsed = JSON.parse(text);
                     } catch {
-                        showToast('Invalid file: the content is not JSON.', { duration: TOAST_CONFIRM_DURATION });
+                        showToast('Invalid file: the content is not JSON.', { duration: TOAST_CONFIRM_DURATION, keepUndo: true });
                         return;
                     }
 
@@ -1742,7 +1769,7 @@
                             && ((parsed.collected && typeof parsed.collected === 'object' && !Array.isArray(parsed.collected))
                                 || (parsed.inventory && typeof parsed.inventory === 'object' && !Array.isArray(parsed.inventory)));
                         if (!(rawIsEmpty && hasEnvelope)) {
-                            showToast('No fish recognized in the file.', { duration: TOAST_CONFIRM_DURATION });
+                            showToast('No fish recognized in the file.', { duration: TOAST_CONFIRM_DURATION, keepUndo: true });
                             return;
                         }
                     }
@@ -1763,7 +1790,7 @@
                     );
                 })
                 .catch(() => {
-                    showToast('The selected file could not be read.', { duration: TOAST_CONFIRM_DURATION });
+                    showToast('The selected file could not be read.', { duration: TOAST_CONFIRM_DURATION, keepUndo: true });
                 });
         }
 
