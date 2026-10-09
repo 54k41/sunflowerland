@@ -1422,6 +1422,16 @@
             return normalized;
         }
 
+        // Compares two NORMALIZED inventories (values are always `true`) by key set.
+        // JSON.stringify depends on key insertion order, which made two identical
+        // collections read as different when the keys were inserted in another
+        // order — wiping valid undo history and forcing redraws on cross-tab sync.
+        function sameInventory(a, b) {
+            const keysA = Object.keys(a || {});
+            const keysB = Object.keys(b || {});
+            return keysA.length === keysB.length && keysB.every(k => keysA.includes(k));
+        }
+
         // Removes the legacy (v2) key without ever breaking boot: storage may be
         // blocked (e.g. private mode) and throw an exception.
         function clearLegacyStorage() {
@@ -1476,7 +1486,13 @@
             return {
                 status: 'ok',
                 inventory,
-                needsRewrite: JSON.stringify(inventory) !== JSON.stringify(candidate),
+                // Rewrite only when the stored data is semantically dirty: an id the
+                // database does not know, a value that is not already canonical
+                // (`true`), or a key set that does not survive normalization. Key
+                // ORDER alone is not dirt (sameInventory), so a mere reordering no
+                // longer triggers a pointless write.
+                needsRewrite: !sameInventory(inventory, candidate)
+                    || Object.values(candidate).some(v => v !== true),
                 rev: isPlainObject(parsed) && typeof parsed.rev === 'string' ? parsed.rev : null
             };
         }
@@ -2939,8 +2955,10 @@
             // operations cancelled each other out (e.g. checked and unchecked). The directions
             // recorded in the local history remain valid, so it is kept on purpose
             // — clearing it here would destroy undos for no gain. (lastRev was already
-            // updated above, so repeated events stay ignored.)
-            if (JSON.stringify(incoming) === JSON.stringify(appState.inventory)) return;
+            // updated above, so repeated events stay ignored.) Compared by key set
+            // (sameInventory), not by JSON.stringify, which is order-sensitive and
+            // treated identical collections as different.
+            if (sameInventory(incoming, appState.inventory)) return;
 
             appState.inventory = incoming;
             // The local history describes a sequence of states that is no longer the current one.

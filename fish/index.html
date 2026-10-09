@@ -678,10 +678,15 @@
         /* STORAGE_KEY, THEME_KEY and FILTERS_KEY are declared in the <head>
            <script>, which runs before the CSS because of the anti-FOUC. */
 
-        /* "seasons" holds the NATURAL seasons of each fish — when it is fished
-           without any special bait. Fish Flake, Fish Stick, Fish Oil and Crab
-           Stick are special baits (ALL_SEASON_BAITS below): a fish that accepts
-           one of them can be caught in any season, regardless of this list. */
+        /* "seasons" holds the NATURAL seasons of each fish — the only window in
+           which it can be caught, and what the Season filter matches.
+           The last entry in "baits" for several fish (Fish Flake, Fish Stick,
+           Fish Oil, Crab Stick) is NOT a fishing bait: the game only has four
+           (Earthworm, Grub, Red Wiggler, Fishing Lure). Those four are the Fish
+           Market items that trade for that fish, and the trades rotate by
+           season exactly like the natural window — Fish Flake trades for
+           Halibut only in Autumn, for Blowfish only in Winter (sfl.world,
+           "Fish Market recipes by season"). So they never widen the window. */
         const fishDatabase = [
             { name: "Anchovy", baits: ["Earthworm", "Fish Flake"], chums: ["Carrot", "Egg"], seasons: ["Spring", "Summer", "Autumn", "Winter"] },
             { name: "Butterflyfish", baits: ["Earthworm", "Fish Flake"], chums: ["Sunflower"], seasons: ["Summer", "Autumn"] },
@@ -730,16 +735,15 @@
         fishDatabase.forEach(fish => Object.freeze(fish));
         Object.freeze(fishDatabase);
 
-        // Special baits: any fish that accepts one of them can be caught in
-        // any season, even outside its natural "seasons" listed above.
-        const ALL_SEASON_BAITS = new Set(["Fish Flake", "Fish Stick", "Fish Oil", "Crab Stick"]);
-
-        // A fish matches a season filter when the season is natural for it OR
-        // it accepts a special bait that works all year round.
+        // The Season filter matches a fish's NATURAL seasons only. The Fish
+        // Market items (Fish Flake, Fish Stick, Fish Oil, Crab Stick) are
+        // gated by that same window — Fish Flake trades for Halibut only in
+        // Autumn, for Blowfish only in Winter — so they must not be read as
+        // all-season. Reading them that way (commits 34aa393/222231e, live
+        // until 2026-10-02) made the filter useless: 37 of the 38 fish accept
+        // one of them, so every season chip returned the whole list.
         function isCatchableInSeason(fish, season) {
-            return !season
-                || fish.seasons.includes(season)
-                || fish.baits.some(bait => ALL_SEASON_BAITS.has(bait));
+            return !season || fish.seasons.includes(season);
         }
 
         // Cache of the valid names to avoid rebuilding on every getInventory() call
@@ -968,10 +972,6 @@
         let toastTimeout = null;
         let toastExitTimeout = null;
         let announceTimeout = null;
-        // True while the visible toast is a purely informational one (export,
-        // import error) that must not end the undo window. dismissToast()
-        // consults it before clearing the stack.
-        let toastKeepUndo = false;
 
         const toastEl = document.getElementById('toast');
         const toastMsg = document.getElementById('toastMsg');
@@ -1038,18 +1038,17 @@
         }
 
         // Closes the notification without performing an action and cancels the
-        // pending timer. It ends the undo window, unless the visible toast is
-        // a purely informational one (toastKeepUndo), e.g. an export
-        // confirmation shown while previous toggles are still undoable.
+        // pending timer. It ends the undo window: an informational toast
+        // (export confirmation, import error) replaces the undoable one, and
+        // once it is gone there is no visible way back — keeping the stack
+        // would only leave an unreachable entry that the next toggle would
+        // mislabel as a second pending change.
         function dismissToast() {
             if (toastTimeout) {
                 clearTimeout(toastTimeout);
                 toastTimeout = null;
             }
-            if (!toastKeepUndo) {
-                undoStack = [];
-            }
-            toastKeepUndo = false;
+            undoStack = [];
             closeToast();
         }
 
@@ -1060,12 +1059,8 @@
 
         // `undoable: false` (the default) ends the undo window: a notification
         // that is not undoable means the person has already moved on.
-        // Exception: `keepUndo: true` for purely informational toasts (export
-        // confirmation, import errors) that do not invalidate previous
-        // changes — they leave the stack alone so pending undos survive.
-        function showToast(message, { undoable = false, duration = TOAST_DURATION, keepUndo = false } = {}) {
-            if (!undoable && !keepUndo) undoStack = [];
-            toastKeepUndo = !undoable && keepUndo;
+        function showToast(message, { undoable = false, duration = TOAST_DURATION } = {}) {
+            if (!undoable) undoStack = [];
 
             toastMsg.textContent = message;
             toastUndo.textContent = undoable
@@ -1158,7 +1153,7 @@
                 // of the in-memory restoration, so the retry needs to skip the
                 // guard and just try to write again.
                 const stateOnReload = previousState ? 'missing' : 'collected';
-                undoStack.push({ name, previousState, retryPending: true });
+                pushUndo({ name, previousState, retryPending: true });
                 showToast(
                     `Could not save: ${name} was restored on screen, but on page reload it will go back to ${stateOnReload}.${hiddenNote}`,
                     { undoable: true }
@@ -1722,7 +1717,7 @@
             const count = Object.keys(inv).length;
             showToast(
                 `${pluralize(count, 'fish exported', 'fish exported')}.`,
-                { duration: TOAST_CONFIRM_DURATION, keepUndo: true }
+                { duration: TOAST_CONFIRM_DURATION }
             );
         }
 
@@ -1761,7 +1756,7 @@
                     try {
                         parsed = JSON.parse(text);
                     } catch {
-                        showToast('Invalid file: the content is not JSON.', { duration: TOAST_CONFIRM_DURATION, keepUndo: true });
+                        showToast('Invalid file: the content is not JSON.', { duration: TOAST_CONFIRM_DURATION });
                         return;
                     }
 
@@ -1784,7 +1779,7 @@
                             && ((parsed.collected && typeof parsed.collected === 'object' && !Array.isArray(parsed.collected))
                                 || (parsed.inventory && typeof parsed.inventory === 'object' && !Array.isArray(parsed.inventory)));
                         if (!(rawIsEmpty && hasEnvelope)) {
-                            showToast('No fish recognized in the file.', { duration: TOAST_CONFIRM_DURATION, keepUndo: true });
+                            showToast('No fish recognized in the file.', { duration: TOAST_CONFIRM_DURATION });
                             return;
                         }
                     }
@@ -1805,7 +1800,7 @@
                     );
                 })
                 .catch(() => {
-                    showToast('The selected file could not be read.', { duration: TOAST_CONFIRM_DURATION, keepUndo: true });
+                    showToast('The selected file could not be read.', { duration: TOAST_CONFIRM_DURATION });
                 });
         }
 
